@@ -1,0 +1,18 @@
+pympd is an alternative python interface to mpd that uses twisted. I
+wrote it because I was having trouble with mpdclient often falling
+into a bad state and not taking commands; and because my programs use
+the twisted event loop and would rather not block for whatever
+mpdclient does.
+
+Depends on twisted from http://twistedmatrix.com/projects/core/
+
+References:
+ http://www.musicpd.org/
+ http://mpd.wikicities.com/wiki/ClientLib:py-libmpdclient
+ http://twistedmatrix.com/
+
+pympd is released under the GNU Public License.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+For the full license, see COPYING.
