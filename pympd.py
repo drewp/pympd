@@ -7,7 +7,7 @@ logging.basicConfig()
 log = logging.getLogger()
 #log.setLevel(logging.DEBUG)
 
-class BufferedCommandClientFactory(protocol.ReconnectingClientFactory):
+class QueueingCommandClientFactory(protocol.ReconnectingClientFactory):
 
     """protocol to send commands to a server, even if the connection
     sometimes gets lost. Commands can receive responses.
@@ -19,7 +19,7 @@ class BufferedCommandClientFactory(protocol.ReconnectingClientFactory):
     # set this to a protocol that can send commands and return their
     # results. the command sender method shall be called 'send' and
     # the responses should go to 'self.factory.response'
-    connectionProtocol = None
+    protocol = None
 
     def __init__(self):
         self.commands = []
@@ -28,8 +28,8 @@ class BufferedCommandClientFactory(protocol.ReconnectingClientFactory):
 
     def buildProtocol(self, addr):
         self.resetDelay()
-        self.conn = self.connectionProtocol(self.responseReceived,
-                                            self.errorReceived)
+        self.conn = self.protocol(self.responseReceived,
+                                  self.errorReceived)
         
         self.conn.connectionMade = self.trySendingCommands
 
@@ -125,12 +125,12 @@ def colonDictParse(lines,obj):
         if not key.startswith('_'):
             setattr(obj,key,val)
 
-class Mpd(BufferedCommandClientFactory):
+class Mpd(QueueingCommandClientFactory):
     """http://mpd.wikicities.com/wiki/MusicPlayerDaemonCommands
     (someone should put those descriptions into docstrings here, for
     better pydoc"""
     
-    connectionProtocol = MpdConnection
+    protocol = MpdConnection
 
     def play(self,songnum=None):
         songpart = ""
