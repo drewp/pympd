@@ -21,6 +21,7 @@ between mpdclient and pympd:
 - pympd supports my mpd patch for fractional-second accurate times,
   and might even reject unpatched mpds
 
+cvs -z3 -d :pserver:anonymous@bigasterisk.com:/srcmirror co pympd
 """,
   
   author="Drew Perttula",
