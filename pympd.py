@@ -4,7 +4,7 @@ from twisted.internet import defer, protocol, reactor
 from twisted.protocols import basic
 import logging
 logging.basicConfig()
-log = logging.getLogger()
+log = logging.getLogger("mpd")
 #log.setLevel(logging.DEBUG)
 
 class QueueingCommandClientFactory(protocol.ReconnectingClientFactory):
@@ -73,6 +73,9 @@ class QueueingCommandClientFactory(protocol.ReconnectingClientFactory):
         of the list will get sent next)"""
         return self.commands
 
+class MpdError(Exception):
+    pass
+
 class MpdConnection(basic.LineReceiver):
     delimiter = "\n"
 
@@ -98,8 +101,8 @@ class MpdConnection(basic.LineReceiver):
             self.responseReceived(self.resp)
             self.resp = []
         elif data.startswith("ACK"):
-            log.error("got %r %r" % (self.resp,data))
-            self.errorReceived(data)
+            log.error("mpd said %r %r" % (self.resp,data))
+            self.errorReceived(MpdError(data))
             self.resp = []
         else:
             self.resp.append(data)
@@ -166,7 +169,7 @@ class Mpd(QueueingCommandClientFactory):
             return self.status().addCallback(lambda s:
                                              finish(s.song,seconds))
         else:
-            return defer.succeed(finish(song,seconds))        
+            return finish(song,seconds)
 
     def currentsong(self):
         def parse(result):
