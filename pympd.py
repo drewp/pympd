@@ -128,12 +128,23 @@ def colonDictParse(lines,obj):
         if not key.startswith('_'):
             setattr(obj,key,val)
 
+class Song(object):
+    def __repr__(self):
+        return "<Song %r>" % self.__dict__
+
 class Mpd(QueueingCommandClientFactory):
     """http://mpd.wikicities.com/wiki/MusicPlayerDaemonCommands
     (someone should put those descriptions into docstrings here, for
     better pydoc"""
     
     protocol = MpdConnection
+    def __init__(self, requireFloatTimes=True):
+        """mpd can be patched to return more accurate times (instead 
+        of int seconds). This client can be set to fail if mpd is 
+        not returning 'timefloat' values
+        """
+        QueueingCommandClientFactory.__init__(self)
+        self.requireFloatTimes = requireFloatTimes
 
     def play(self,songnum=None):
         songpart = ""
@@ -173,8 +184,6 @@ class Mpd(QueueingCommandClientFactory):
 
     def currentsong(self):
         def parse(result):
-            class Song:
-                pass
             s = Song()
             colonDictParse(result,s)
             return s
@@ -189,21 +198,42 @@ class Mpd(QueueingCommandClientFactory):
                     return repr(self.__dict__)
             d = Status()
             colonDictParse(result, d)
-            if hasattr(d,'timefloat'):
-                d.time_elapsed, d.time_total = [float(t) for t in
-                                                d.timefloat.split(':')]
-            else:
-                if hasattr(d,'time'):
-                    raise RuntimeError("your mpd has not been patched to deliver the timefloat status attribute")
+            if self.requireFloatTimes:
+                if hasattr(d,'timefloat'):
+                    d.time_elapsed, d.time_total = [float(t) for t in
+                                                    d.timefloat.split(':')]
+                else:
+                    if hasattr(d,'time'):
+                        raise RuntimeError("your mpd has not been patched to deliver the timefloat status attribute")
             return d
         return self.send("status").addCallback(parse)
 
+    def playlistinfo(self, song=None):
+        """returns list of song objects with file, Time, Pos, and Id
+        attributes (with that capitalization)"""
+        def parse(result):
+            songs = []
+            linebuf = []
+            for line in result:
+                if line.startswith("file: ") and linebuf:
+                    songs.append(Song())
+                    colonDictParse(linebuf, songs[-1])
+                linebuf.append(line)
+            songs.append(Song())
+            colonDictParse(linebuf,songs[-1])
+            return songs
+        songpart = ""
+        if song is not None:
+            songpart = " %s" % song
+        return self.send("playlistinfo%s" % songpart).addCallback(parse)
+        
+
 if __name__ == '__main__':
-    f = Mpd()
+    f = Mpd(requireFloatTimes=False)
     def printer(x): print x
     f.status().addCallback(printer)
-    f.play()
-    f.seek(0)
+    f.playlistinfo().addCallback(printer)
+    #f.seek(0)
     reactor.connectTCP('localhost', 6600, f)
-    reactor.callLater(1,f.pause)
+    #reactor.callLater(1,f.pause)
     reactor.run()
