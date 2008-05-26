@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>MPD control</title>
+    <style type="text/css">
+      table, td {
+      border-collapse: collapse;
+border: 1px solid gray;
+}
+div.state {
+  border: 1px solid black;
+}
+div.state-pause {
+  background: #c66;
+}
+div.state-play {
+  background: #6c6;
+}
+#lastCmd {
+  height: 5em; 
+  overflow: scroll;
+}
+    </style>
+    <script type="text/javascript" src="MochiKit-r1383.js"></script>
+
+    <script type="text/javascript">
+    function callMpd(command, args) {
+
+      if (!args) {
+        args = {};
+      }
+      var d = doXHR("mpd/"+command, {method: "POST", 
+                                     sendContent: serializeJSON(args)});
+      d.addCallback(function (xhr) {
+        var result = evalJSONRequest(xhr);
+	appendChildNodes('lastCmd',
+	                 LI(null, "Command: "+ command+" -> "+result));
+        return result;
+      });
+      return d;
+
+    }
+
+    function playOne(filename) {
+      callMpd("clear").addCallback(function (result) {
+        callMpd("add", {path: filename}).addCallback(function (result) {
+	  callMpd("play", {song:1});
+        });
+      });
+    }
+
+    function updateStatus() {
+      callMpd("status").addCallback(function (status) {
+        $('status').innerHTML = items(status);
+	$('state').innerHTML = status.state;
+	$('state').setAttribute('class', 'state state-'+status.state);
+	
+      });
+    }
+
+    function updatePlaylist() {
+
+      callMpd("playlistinfo").addCallback(function (songs) {
+        forEach(songs, function(song) {
+	  appendChildNodes($('playlist'),
+	                  TR({class:'row-'+song.Pos}, 
+[TD(null, song.file), 
+			  //  pos should actually be the display order. maybe they come in order?
+			            TD(null, song.Pos)]));
+	});
+      });
+    }   
+
+    MochiKit.DOM.addToCallStack(window, 'onload', function () {
+       updateStatus();
+       updatePlaylist();
+    });
+
+    </script>
+  </head>
+  <body>
+
+    <div id="state"></div>
+
+    status is <div id="status"></div>
+    
+    <table id="playlist">
+
+    </table>
+
+    <form>
+      <input type="submit" value="Shakira" onClick="playOne('othercd/Shakira/Unplugged/02_Si_Te_Vas.mp3'); return false;"/>
+      <input type="submit" value="play / pause" onClick="callMpd('pause'); updateStatus(); return false;"/>
+      <input type="submit" value="seek" onClick="callMpd('seek', {seconds:10}); return false;"/>
+    </form>
+
+    Commands:
+    <div id="lastCmd"></div>
+
+  </body>
+</html>

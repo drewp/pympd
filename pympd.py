@@ -128,9 +128,29 @@ def colonDictParse(lines,obj):
         if not key.startswith('_'):
             setattr(obj,key,val)
 
-class Song(object):
+class ResultDict(object):
+    def jsonState(self):
+        ret = {}
+        for k, v in self.__dict__.items():
+            if isinstance(k, str):
+                k = k.decode('utf-8')
+            if isinstance(v, str):
+                v = v.decode('utf-8')
+            ret[k] = v
+        return ret
+
+class Songs(list):
+    def jsonState(self):
+        return [x.jsonState() for x in self]
+
+class Song(ResultDict):
     def __repr__(self):
         return "<Song %r>" % self.__dict__
+
+class Status(ResultDict):
+    def __repr__(self):
+        return repr(self.__dict__)
+
 
 class Mpd(QueueingCommandClientFactory):
     """http://mpd.wikicities.com/wiki/MusicPlayerDaemonCommands
@@ -193,9 +213,6 @@ class Mpd(QueueingCommandClientFactory):
         """returns Status obj with attributes based on mpd status,
         plus extra attributes time_elapsed, time_total"""
         def parse(result):
-            class Status:
-                def __repr__(self):
-                    return repr(self.__dict__)
             d = Status()
             colonDictParse(result, d)
             if self.requireFloatTimes:
@@ -212,7 +229,7 @@ class Mpd(QueueingCommandClientFactory):
         """returns list of song objects with file, Time, Pos, and Id
         attributes (with that capitalization)"""
         def parse(result):
-            songs = []
+            songs = Songs()
             linebuf = []
             for line in result:
                 if line.startswith("file: ") and linebuf:
