@@ -184,6 +184,9 @@ class Mpd(QueueingCommandClientFactory):
     def add(self,path):
         return self.send("add %s" % path)
 
+    def deleteid(self, songid):
+        return self.send("deleteid %s" % songid)
+
     def seek(self,seconds,song=None):
         """please note reverse order of arguments from the protocol.
         If you omit song, the current song number will be retrieved
@@ -243,6 +246,29 @@ class Mpd(QueueingCommandClientFactory):
         if song is not None:
             songpart = " %s" % song
         return self.send("playlistinfo%s" % songpart).addCallback(parse)
+
+    def lsinfo(self, directory="/"):
+        """list of tuples like ('directory', fullPath) or
+        ('file', filename, time)"""
+        def parse(result):
+            class Entries(list):
+                def jsonState(self):
+                    return [map(unicode, x) for x in self]
+                
+            ret = Entries()
+            fileLine = None
+            for line in result:
+                if line.startswith('directory: '):
+                    ret.append(('directory', line.split(': ', 1)[1]))
+                elif line.startswith('file: '):
+                    fileLine = line.split(': ', 1)[1]
+                elif line.startswith('Time: '):
+                    ret.append(('file', fileLine, int(line.split(': ', 1)[1])))
+                elif line.startswith('playlist: '):
+                    # see http://mpd.wikia.com/wiki/MusicPlayerDaemonCommands#How_to_get_the_available_playlists
+                    pass
+            return ret
+        return self.send("lsinfo %s" % directory).addCallback(parse)
         
 
 if __name__ == '__main__':
