@@ -64,12 +64,35 @@ class MpdCommand(object):
         
     def locateChild(self, ctx, segments):
         methodName = segments[0]
+        if methodName == 'lsinfoTree':
+            return self.child_lsinfoTree(ctx), []
         if methodName.startswith('_'):
             raise ValueError("command: %s" % methodName)
 
         mpdMethod = getattr(self.mpd, methodName)
         callArgs = argsFromPost(mpdMethod, postDataFromCtx(ctx))
+        print "Command: %s(%r)" % (mpdMethod, callArgs)
         return JsonResult(mpdMethod(**callArgs)), []
+
+    def child_lsinfoTree(self, ctx):
+        """extjs tree makes POST requests with a 'node' arg, and
+        expects child node definitions
+        http://extjs.com/deploy/dev/docs/output/Ext.tree.TreeLoader.html
+        """
+        d = self.mpd.lsinfo(directory=ctx.arg('node')) # untrusted
+        def formatChildren(result):
+            ret = []
+            for child in result:
+                name = child[1].decode('utf-8')
+                base = name.rsplit('/',1)[-1]
+                ret.append({u'id':name,
+                            u'text':base,
+                            u'leaf':child[0] == 'file'})
+            return json.serialize(ret)
+            
+        return d.addCallback(formatChildren)
+
+        return "[{id:1,text:'hi',leaf:true}]"
 
 def argsFromPost(method, postData):
     """return an args dict based on the json-encoded postdata,
@@ -106,7 +129,17 @@ class Mpdweb(rend.Page):
         """e.g. /mpd/pause"""
         return MpdCommand(self.mpd)        
 
-setattr(Mpdweb, 'child_MochiKit-r1383.js', static.File('MochiKit-r1383.js'))
+for attr, filename in [('MochiKit-r1383.js', 'MochiKit-r1383.js'),
+                       ('mpd.js', 'mpd.js'),
+                       ('ext-all.js', 'ext-2.1/ext-all.js'),
+                       ('ext-base.js', 'ext-2.1/adapter/ext/ext-base.js'),
+                       ('ext-all.css', 'ext-2.1/resources/css/ext-all.css'),
+                       ('images', 'ext-2.1/resources/images'),
+                       ('ctl.css', 'ctl.css'),
+                       ('priv.js', 'priv.js'),
+                       ]:
+    setattr(Mpdweb, 'child_'+attr, static.File(filename))
+
 
 if __name__ == '__main__':
     parser = optparse.OptionParser()
