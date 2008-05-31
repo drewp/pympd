@@ -4,78 +4,124 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>MPD control</title>
-    <style type="text/css">
-      table, td {
-      border-collapse: collapse;
-border: 1px solid gray;
-}
-div.state {
-  border: 1px solid black;
-}
-div.state-pause {
-  background: #c66;
-}
-div.state-play {
-  background: #6c6;
-}
-#lastCmd {
-  height: 5em; 
-  overflow: scroll;
-}
-    </style>
+
+    <link rel="stylesheet" type="text/css" href="ext-all.css" />
+    <link rel="stylesheet" type="text/css" href="ctl.css" />
+
     <script type="text/javascript" src="MochiKit-r1383.js"></script>
-
+    <script type="text/javascript" src="ext-base.js"></script>
+    <script type="text/javascript" src="ext-all.js"></script>
+    <script type="text/javascript" src="mpd.js"></script>
+    <script type="text/javascript" src="priv.js"></script>
     <script type="text/javascript">
-    function callMpd(command, args) {
 
-      if (!args) {
-        args = {};
-      }
-      var d = doXHR("mpd/"+command, {method: "POST", 
-                                     sendContent: serializeJSON(args)});
-      d.addCallback(function (xhr) {
-        var result = evalJSONRequest(xhr);
-	appendChildNodes('lastCmd',
-	                 LI(null, "Command: "+ command+" -> "+result));
-        return result;
-      });
-      return d;
-
-    }
-
-    function playOne(filename) {
-      callMpd("clear").addCallback(function (result) {
-        callMpd("add", {path: filename}).addCallback(function (result) {
-	  callMpd("play", {song:1});
-        });
-      });
-    }
-
-    function updateStatus() {
-      callMpd("status").addCallback(function (status) {
-        $('status').innerHTML = items(status);
+    function updateStatus(status) {
+        $('status').innerHTML = serializeJSON(status);
 	$('state').innerHTML = status.state;
 	$('state').setAttribute('class', 'state state-'+status.state);
-	
-      });
+	// 'error' key should be displayed. to get one, add a bogus http:// path
+	updatePlayingRow(status.song);
+    }
+
+    function updatePlayingRow(num) {
+	var lastPlaying = $('playlist').getAttribute("playingRow");
+	if (lastPlaying != null) {
+	    try {
+		removeElementClass($('playlist').childNodes[lastPlaying], 
+				   "playing");
+	    } catch(e) {
+		// lastplaying row might be deleted already
+	    }
+	}
+
+	var playingRow = $('playlist').childNodes[num];
+	addElementClass(playingRow, "playing");
+	$('playlist').setAttribute("playingRow", num);
     }
 
     function updatePlaylist() {
+	callMpd("playlistinfo").addCallback(function (songs) {
+	    function songRow(song) {
+		var del = A({href:'javascript:delId('+song.Id+')'}, "[X]");
+		var link = A({href:'javascript:playPos('+song.Pos+')'}, 
+         	             song.file);
+		return DIV({class:'song row-'+song.Pos}, [del, " ", link]);
+	    }
 
-      callMpd("playlistinfo").addCallback(function (songs) {
-        forEach(songs, function(song) {
-	  appendChildNodes($('playlist'),
-	                  TR({class:'row-'+song.Pos}, 
-[TD(null, song.file), 
-			  //  pos should actually be the display order. maybe they come in order?
-			            TD(null, song.Pos)]));
+	    var rows = []; //list(applymap(songRow, songs)); errors silently!
+	    forEach(songs, function (s) { rows.push(songRow(s)) });
+
+	    replaceChildNodes($('playlist'), rows);
+	    var row = $('playlist').getAttribute("playingRow")
+	    if (row != null) {
+		updatePlayingRow(row);
+            }
 	});
-      });
     }   
 
+    function setupLibraryTree() {
+	var loader = new Ext.tree.TreeLoader({dataUrl:'mpd/lsinfoTree'});	
+
+	var selection = new Ext.tree.MultiSelectionModel();
+	var tree = new Ext.tree.TreePanel({
+            el:'tree-div',
+            autoScroll:true,
+            animate:true,
+            containerScroll: true, 
+            loader: loader,
+	    selModel: selection,
+	    bbar: [{text:"Add", 
+		    handler:function(ev){
+			chain = succeed();
+			forEach(selection.getSelectedNodes(), function (node) {
+			    chain.addCallback(function (result) {
+				return callMpd("add", {path:node.id});
+			    });
+			});
+		        // busy cursor until they're all done?
+			chain.addCallback(function (result) {
+			    updatePlaylist();
+			});
+		    },
+		   }],
+	});
+
+	var root = new Ext.tree.AsyncTreeNode({
+            text: 'Music Library',
+            draggable:false,
+            id:'/'
+	});
+	tree.setRootNode(root);
+
+	tree.addListener('dblclick', function (node, ev) {
+	    addPlay(node.id);
+	});
+	// how do i bind return-key to the same action?
+
+	tree.render();
+	root.expand();
+    }
+
+    function addRadio() {
+	forEach(stations, function (nameUrl) { 
+	    var cmd = "playOne('" + nameUrl[1] + "'); return false;";
+	    $('buttons').appendChild(INPUT({
+		type:"submit", 
+		value:nameUrl[0], 
+		class:'radio',
+		onclick:cmd}));
+	});
+    }
+
     MochiKit.DOM.addToCallStack(window, 'onload', function () {
-       updateStatus();
-       updatePlaylist();
+	logMpdCommands('lastCmd');
+	observeStatus(updateStatus);
+	observePlaylist(updatePlaylist);
+
+	callMpd("status");
+	updatePlaylist();
+	setupLibraryTree();
+	addRadio();
     });
 
     </script>
@@ -84,20 +130,48 @@ div.state-play {
 
     <div id="state"></div>
 
-    status is <div id="status"></div>
-    
-    <table id="playlist">
+    <form id="buttons">
+      <input type="submit" value="playone" 
+	     onclick="playOne('05_Ultramarine.mp3'); return false"/>
+      <input type="submit" value="status" 
+	     onclick="callMpd('status'); return false"/>
+      <input type="submit" value="playlist" 
+	     onclick="updatePlaylist(); return false"/>
+      <input type="submit" value="play / pause" 
+	     onclick="callMpd('pause', {}, true); return false"/>
+      <input type="submit" value="seek" 
+	     onclick="callMpd('seek', {seconds:10}, true); return false"/>
 
-    </table>
-
-    <form>
-      <input type="submit" value="Shakira" onClick="playOne('othercd/Shakira/Unplugged/02_Si_Te_Vas.mp3'); return false;"/>
-      <input type="submit" value="play / pause" onClick="callMpd('pause'); updateStatus(); return false;"/>
-      <input type="submit" value="seek" onClick="callMpd('seek', {seconds:10}); return false;"/>
     </form>
+    
+    <div id="tree-div" 
+	 style="float: right;overflow:auto; height:300px;width:250px;"></div>
+
+    <div id="playlist">
+    </div>
+    <div style="clear:right"/>
+
+    Status:
+    <div id="status"></div>
 
     Commands:
     <div id="lastCmd"></div>
+
+    <div style="display: none">
+      todo:
+        OK indicate playing song
+        OK add any songs
+	OK delete song(s)
+	track current song time and change
+	playlistinfo for current song names
+        get ACS pods
+	seeker
+	simpler alternate players, like for treo
+	pretty
+	delete related adjacent songs
+        widget
+        keyboard shortcuts on all buttons
+    </div>
 
   </body>
 </html>

@@ -1,0 +1,31 @@
+* {
+    font-family: Verdana;
+}
+table, td {
+    border-collapse: collapse;
+    border: 1px solid gray;
+}
+div.state {
+    border: 1px solid black;
+}
+div.state-pause {
+    background: #c66;
+}
+div.state-play {
+    background: #6c6;
+}
+#playlist {
+  -moz-column-width: 20em;
+}
+.playing {
+    background: red;
+}
+#lastCmd {
+    height: 20em; 
+    overflow: scroll;
+    font-size: 62%;
+    background: #bbb;
+}
+.radio {
+  background: #cfc;
+}
