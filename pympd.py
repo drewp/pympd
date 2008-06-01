@@ -239,8 +239,9 @@ class Mpd(QueueingCommandClientFactory):
                     songs.append(Song())
                     colonDictParse(linebuf, songs[-1])
                 linebuf.append(line)
-            songs.append(Song())
-            colonDictParse(linebuf,songs[-1])
+            if linebuf:
+                songs.append(Song())
+                colonDictParse(linebuf,songs[-1])
             return songs
         songpart = ""
         if song is not None:
