@@ -14,7 +14,12 @@ class QueueingCommandClientFactory(protocol.ReconnectingClientFactory):
 
     There should be a setting to describe if a response could come
     after a reconnection (unlikely) or whether we should forget about
-    all pending responses if there's a reconnection."""
+    all pending responses if there's a reconnection.
+
+    I think I'm getting jumbled responses when I send too
+    quickly. There should be a way to request that we only allow one
+    outstanding command at once, which might fit with how mpd works.
+    """
 
     # set this to a protocol that can send commands and return their
     # results. the command sender method shall be called 'send' and
@@ -181,6 +186,10 @@ class Mpd(QueueingCommandClientFactory):
     def clear(self):
         return self.send("clear")
 
+    def setvol(self, vol):
+        """set volume, 0..100"""
+        return self.send("setvol %d" % vol)
+
     def add(self,path):
         # path with spaces is making an error here
         return self.send("add %s" % path)
@@ -231,7 +240,8 @@ class Mpd(QueueingCommandClientFactory):
 
     def playlistinfo(self, song=None):
         """returns list of song objects with file, Time, Pos, and Id
-        attributes (with that capitalization)"""
+        attributes (with that capitalization). Optional arg song is a
+        playlist position."""
         def parse(result):
             songs = Songs()
 
@@ -239,7 +249,10 @@ class Mpd(QueueingCommandClientFactory):
                 if line.startswith("file: "):
                     songs.append(Song())
 
-                colonDictParse([line], songs[-1])
+                if songs:
+                    colonDictParse([line], songs[-1])
+                # else, we might be getting the wrong response? it's
+                # only happened once and it wasn't repeatable
             return songs
 
         songpart = ""
