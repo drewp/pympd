@@ -40,7 +40,7 @@ class JsonResult(object):
                 ret = result.jsonState()
             else:
                 ret = result
-            print "result", ret
+            print "result", str(ret)[:1000]
             return json.serialize(ret)
 
         request = inevow.IRequest(ctx)
