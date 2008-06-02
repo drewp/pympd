@@ -182,6 +182,7 @@ class Mpd(QueueingCommandClientFactory):
         return self.send("clear")
 
     def add(self,path):
+        # path with spaces is making an error here
         return self.send("add %s" % path)
 
     def deleteid(self, songid):
@@ -233,16 +234,14 @@ class Mpd(QueueingCommandClientFactory):
         attributes (with that capitalization)"""
         def parse(result):
             songs = Songs()
-            linebuf = []
+
             for line in result:
-                if line.startswith("file: ") and linebuf:
+                if line.startswith("file: "):
                     songs.append(Song())
-                    colonDictParse(linebuf, songs[-1])
-                linebuf.append(line)
-            if linebuf:
-                songs.append(Song())
-                colonDictParse(linebuf,songs[-1])
+
+                colonDictParse([line], songs[-1])
             return songs
+
         songpart = ""
         if song is not None:
             songpart = " %s" % song
