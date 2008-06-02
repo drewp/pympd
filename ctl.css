@@ -1,25 +1,62 @@
 * {
     font-family: Verdana;
 }
+body {
+  background: #bce;
+}
 table, td {
     border-collapse: collapse;
     border: 1px solid gray;
 }
 div.state {
-    border: 1px solid black;
+    border:1px solid gray;
+    float:left;
+    font-size:150%;
+    height:1.6em;
+    margin-left:0.1em;
+    margin-top:0.1em;
+    text-align:center;
+    width:4em;
 }
+
 div.state-pause {
     background: #c66;
 }
 div.state-play {
     background: #6c6;
 }
+div.state-stop {
+    background: #c95;
+}
+
 #playlist {
   -moz-column-width: 20em;
+  background:white none repeat scroll 0% 0%;
+  border:1px solid gray;
+  margin:0.5em;
+  padding:0.2em;
 }
 .playing {
-    background: red;
+    background: #af6;
 }
+#playlist div {
+  font-size: 80%;
+}
+#playlist div a {
+  text-decoration: none;
+}
+
+.buttonBar {
+    background: white;
+    margin: 0.5em;
+    padding: 0.2em;
+    text-align: center;
+}
+#radio input {
+    border:1px outset gray;
+    margin:1px;
+}
+
 #lastCmd {
     height: 20em; 
     overflow: scroll;
