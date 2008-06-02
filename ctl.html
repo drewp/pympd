@@ -10,6 +10,9 @@
 
     <script type="text/javascript" src="MochiKit-r1383.js"></script>
     <script type="text/javascript" src="ext-base.js"></script>
+    <script type="text/javascript">
+      Ext.BLANK_IMAGE_URL = "images/default/s.gif";
+    </script>
     <script type="text/javascript" src="ext-all.js"></script>
     <script type="text/javascript" src="mpd.js"></script>
     <script type="text/javascript" src="priv.js"></script>
@@ -23,6 +26,9 @@
 	updatePlayingRow(status.song);
     }
 
+    /*
+    highlight the given row number in the playlist
+    */
     function updatePlayingRow(num) {
 	var lastPlaying = $('playlist').getAttribute("playingRow");
 	if (lastPlaying != null) {
@@ -39,17 +45,35 @@
 	$('playlist').setAttribute("playingRow", num);
     }
 
+    /*
+    shorten/cleanup filenames for display in the playlist
+    */
+    function displayedName(filename) {
+	var parts = filename.split('/');
+	var L = parts.length;
+	if (L >= 2) {
+	    filename = parts[L - 2] + '/' + parts[L - 1];
+	}
+	filename = filename.replace(/\.(mp3|ogg)$/, "");
+	filename = filename.replace(/_/g, " ");
+	return filename;
+    }
+
     function updatePlaylist() {
 	callMpd("playlistinfo").addCallback(function (songs) {
 	    function songRow(song) {
 		var del = A({href:'javascript:delId('+song.Id+')'}, "[X]");
 		var link = A({href:'javascript:playPos('+song.Pos+')'}, 
-         	             song.file);
+         	    displayedName(song.file));
 		return DIV({class:'song row-'+song.Pos}, [del, " ", link]);
 	    }
 
 	    var rows = []; //list(applymap(songRow, songs)); errors silently!
 	    forEach(songs, function (s) { rows.push(songRow(s)) });
+
+	    if (!rows.length) {
+		rows = [DIV({class:'no-songs'}, ["No songs in playlist"])];
+	    }
 
 	    replaceChildNodes($('playlist'), rows);
 	    var row = $('playlist').getAttribute("playingRow")
@@ -93,6 +117,8 @@
 	});
 	tree.setRootNode(root);
 
+	// oops, this is also trapping attempts to expand albums. those 
+	// should probably go back to expand/collapse, not addPlay
 	tree.addListener('dblclick', function (node, ev) {
 	    addPlay(node.id);
 	});
@@ -105,7 +131,7 @@
     function addRadio() {
 	forEach(stations, function (nameUrl) { 
 	    var cmd = "playOne('" + nameUrl[1] + "'); return false;";
-	    $('buttons').appendChild(INPUT({
+	    $('radio').appendChild(INPUT({
 		type:"submit", 
 		value:nameUrl[0], 
 		class:'radio',
@@ -113,8 +139,13 @@
 	});
     }
 
+    function startPolling() {
+	Ext.TaskMgr.start({run: function() { callMpd("status") },
+			   interval: 5000});
+    }
+
     MochiKit.DOM.addToCallStack(window, 'onload', function () {
-	logMpdCommands('lastCmd');
+	//logMpdCommands('lastCmd');
 	observeStatus(updateStatus);
 	observePlaylist(updatePlaylist);
 
@@ -122,6 +153,7 @@
 	updatePlaylist();
 	setupLibraryTree();
 	addRadio();
+	startPolling();
     });
 
     </script>
@@ -130,26 +162,49 @@
 
     <div id="state"></div>
 
-    <form id="buttons">
-      <input type="submit" value="playone" 
-	     onclick="playOne('05_Ultramarine.mp3'); return false"/>
-      <input type="submit" value="status" 
-	     onclick="callMpd('status'); return false"/>
-      <input type="submit" value="playlist" 
-	     onclick="updatePlaylist(); return false"/>
-      <input type="submit" value="play / pause" 
-	     onclick="callMpd('pause', {}, true); return false"/>
-      <input type="submit" value="seek" 
-	     onclick="callMpd('seek', {seconds:10}, true); return false"/>
-
-    </form>
+    <div class="buttonBar">
+      <form id="buttons">
+	<div>
+	  <input type="submit" value="playone" 
+		 onclick="playOne('05_Ultramarine.mp3'); return false"/>
+	  <input type="submit" value="play / pause" 
+		 onclick="callMpd('pause', {}, true); return false"/>
+	  <input type="submit" value="stop" 
+		 onclick="callMpd('stop', {}, true); return false"/>
+	  <input type="submit" value="seek :10" 
+		 onclick="callMpd('seek', {seconds:10}, true); return false"/>
+	  
+	</div>
+	<div id="radio">
+	</div>
+      
+      </form>
+    </div>
     
     <div id="tree-div" 
 	 style="float: right;overflow:auto; height:300px;width:250px;"></div>
 
     <div id="playlist">
     </div>
+
+    <div class="buttonBar">
+      <form>
+	<input type="submit" value="clear playlist" 
+	       onclick="callMpd('clear').addCallback(playlistChanged); return false"/>
+      </form>
+      
+    </div>
+    
     <div style="clear:right"/>
+
+    <div class="buttonBar">
+      <form>
+	  <input type="submit" value="Freshen status" 
+		 onclick="callMpd('status'); return false"/>
+	  <input type="submit" value="Freshen playlist" 
+		 onclick="updatePlaylist(); return false"/>
+      </form>
+    </div>
 
     Status:
     <div id="status"></div>
@@ -162,7 +217,7 @@
         OK indicate playing song
         OK add any songs
 	OK delete song(s)
-	track current song time and change
+	OK track current song time and change
 	playlistinfo for current song names
         get ACS pods
 	seeker
