@@ -74,14 +74,16 @@ function playOne(filename) {
 }
 
 /*
-Add the given filename and start playing it
+Add the given filename and start playing it. Filename can be a directory.
 */
 function addPlay(filename) {
-    callMpd("add", {path: filename}, false).addCallback(function (result) {
-	signal(_mpdLog, 'playlistChanged');
-	callMpd("status").addCallback(function(status) {
-	    console.log("st")
-	    callMpd("play", {songnum:status['playlistlength'] - 1}, true);
+
+    callMpd("status").addCallback(function(status) {
+	var lastPos = status['playlistlength'] - 1;
+	callMpd("add", {path: filename}, false).addCallback(function (result) {
+	    signal(_mpdLog, 'playlistChanged');
+
+	    callMpd("play", {songnum:lastPos+1}, true);
 	});
     });
 }
