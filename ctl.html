@@ -24,6 +24,20 @@
 	$('state').setAttribute('class', 'state state-'+status.state);
 	// 'error' key should be displayed. to get one, add a bogus http:// path
 	updatePlayingRow(status.song);
+	updatePlayingSong(status.song);
+    }
+
+    /*
+    Get new info about the currently-playing song in the playlist. Streaming 
+    audio has changing values for Name and Title. If this song isn't streaming 
+    audio, it might be pointless to keep fetching its info.
+    */
+    function updatePlayingSong(song) {
+	callMpd("playlistinfo", {song: song}).addCallback(function (info) {
+	    var addlData = $('song-row-' + info[0].Pos);
+	    replaceChildNodes(addlData, [DIV({}, info[0].Title)]);
+	    
+	});
     }
 
     /*
@@ -48,31 +62,40 @@
     /*
     shorten/cleanup filenames for display in the playlist
     */
-    function displayedName(filename) {
-	var parts = filename.split('/');
+    function displayedName(song) {
+	var name = song.file;
+	if (song.Name) {
+	    // streaming radio puts the stream title here; current 
+	    // song is in 'Title'
+	    name = song.Name;
+	}
+	
+	var parts = name.split('/');
 	var L = parts.length;
 	if (L >= 2) {
-	    filename = parts[L - 2] + '/' + parts[L - 1];
+	    name = parts[L - 2] + '/' + parts[L - 1];
 	}
-	filename = filename.replace(/\.(mp3|ogg)$/, "");
-	filename = filename.replace(/_/g, " ");
-	return filename;
+	name = name.replace(/\.(mp3|ogg)$/, "");
+	name = name.replace(/_/g, " ");
+	return name;
     }
 
     function updatePlaylist() {
 	callMpd("playlistinfo").addCallback(function (songs) {
 	    function songRow(song) {
-		var del = A({href:'javascript:delId('+song.Id+')'}, "[X]");
-		var link = A({href:'javascript:playPos('+song.Pos+')'}, 
-         	    displayedName(song.file));
-		return DIV({class:'song row-'+song.Pos}, [del, " ", link]);
+		var deleteButton = A({href:'javascript:delId('+song.Id+')'}, "[X]");
+		var playLink = A({href:'javascript:playPos('+song.Pos+')'}, 
+         	    displayedName(song));
+		var addlData = DIV({id:'song-row-'+song.Pos}, null);
+		return DIV({'class': 'song row-'+song.Pos}, 
+			   [deleteButton, " ", playLink, addlData]);
 	    }
 
 	    var rows = []; //list(applymap(songRow, songs)); errors silently!
 	    forEach(songs, function (s) { rows.push(songRow(s)) });
 
 	    if (!rows.length) {
-		rows = [DIV({class:'no-songs'}, ["No songs in playlist"])];
+		rows = [DIV({'class': 'no-songs'}, ["No songs in playlist"])];
 	    }
 
 	    replaceChildNodes($('playlist'), rows);
@@ -134,7 +157,7 @@
 	    $('radio').appendChild(INPUT({
 		type:"submit", 
 		value:nameUrl[0], 
-		class:'radio',
+		'class':'radio',
 		onclick:cmd}));
 	});
     }
@@ -144,7 +167,7 @@
 			   interval: 5000});
     }
 
-    MochiKit.DOM.addToCallStack(window, 'onload', function () {
+    function go() {
 	//logMpdCommands('lastCmd');
 	observeStatus(updateStatus);
 	observePlaylist(updatePlaylist);
@@ -154,7 +177,9 @@
 	setupLibraryTree();
 	addRadio();
 	startPolling();
-    });
+    }
+
+    MochiKit.DOM.addToCallStack(window, 'onload', go);
 
     </script>
   </head>
@@ -218,7 +243,8 @@
         OK add any songs
 	OK delete song(s)
 	OK track current song time and change
-	playlistinfo for current song names
+	OK playlistinfo for current song names
+	volume
         get ACS pods
 	seeker
 	simpler alternate players, like for treo
