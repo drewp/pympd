@@ -30,7 +30,7 @@ div.state-stop {
 }
 
 #playlist {
-  -moz-column-width: 20em;
+  -moz-column-width: 30em;
   background:white none repeat scroll 0% 0%;
   border:1px solid gray;
   margin:0.5em;

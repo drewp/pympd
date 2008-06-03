@@ -18,6 +18,8 @@
     <script type="text/javascript" src="priv.js"></script>
     <script type="text/javascript">
 
+      var volumeSlider;
+
     function updateStatus(status) {
         $('status').innerHTML = serializeJSON(status);
 	$('state').innerHTML = status.state;
@@ -25,6 +27,7 @@
 	// 'error' key should be displayed. to get one, add a bogus http:// path
 	updatePlayingRow(status.song);
 	updatePlayingSong(status.song);
+	volumeSlider.setValue(status.volume);
     }
 
     /*
@@ -167,8 +170,23 @@
 			   interval: 5000});
     }
 
+      function createVolumeSlider(parent) {
+	  volumeSlider = new Ext.Slider({
+	      renderTo: parent,
+	      increment: 3,
+	      minValue: 0,
+	      maxValue: 100,
+	      height: 70,
+	      vertical: true
+	  });
+	  volumeSlider.addListener('change', function (sld, value) {
+	      callMpd("setvol", {vol: value})
+	  });
+      }
+
     function go() {
 	//logMpdCommands('lastCmd');
+	createVolumeSlider($('volume'));
 	observeStatus(updateStatus);
 	observePlaylist(updatePlaylist);
 
@@ -185,27 +203,33 @@
   </head>
   <body>
 
-    <div id="state"></div>
+    <table style="border: 0">
+      <tr>
+	<td><div id="state"></div></td>
+	<td style="background: white"><div id="volume"></div></td>
+	<td>
+	  <div class="buttonBar">
+	    <form id="buttons">
+	      <div>
+		<input type="submit" value="playone" 
+		       onclick="playOne('05_Ultramarine.mp3'); return false"/>
+		<input type="submit" value="play / pause" 
+		       onclick="callMpd('pause', {}, true); return false"/>
+		<input type="submit" value="stop" 
+		       onclick="callMpd('stop', {}, true); return false"/>
+		<input type="submit" value="seek :10" 
+		       onclick="callMpd('seek', {seconds:10}, true); return false"/>
+		
+	      </div>
+	      <div id="radio">
+	      </div>
+	      
+	    </form>
+	  </div>
+	</td>
+      </tr>
+    </table>
 
-    <div class="buttonBar">
-      <form id="buttons">
-	<div>
-	  <input type="submit" value="playone" 
-		 onclick="playOne('05_Ultramarine.mp3'); return false"/>
-	  <input type="submit" value="play / pause" 
-		 onclick="callMpd('pause', {}, true); return false"/>
-	  <input type="submit" value="stop" 
-		 onclick="callMpd('stop', {}, true); return false"/>
-	  <input type="submit" value="seek :10" 
-		 onclick="callMpd('seek', {seconds:10}, true); return false"/>
-	  
-	</div>
-	<div id="radio">
-	</div>
-      
-      </form>
-    </div>
-    
     <div id="tree-div" 
 	 style="float: right;overflow:auto; height:300px;width:250px;"></div>
 
@@ -234,9 +258,10 @@
     Status:
     <div id="status"></div>
 
+<!--
     Commands:
     <div id="lastCmd"></div>
-
+-->
     <div style="display: none">
       todo:
         OK indicate playing song
@@ -253,6 +278,6 @@
         widget
         keyboard shortcuts on all buttons
     </div>
-
+<a href="">refresh</a>
   </body>
 </html>
