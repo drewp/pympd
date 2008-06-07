@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>MPD</title>
+    <style type="text/css">
+      table, td {
+	  text-align: center;
+	  vertical-align: middle;
+	  border: 1px solid gray;
+	  border-collapse: collapse;
+      }
+      div {
+	  border: 1px outset gray;
+      }
+      table {
+	  border: 3px outset red;
+      }
+      #radio {
+	  line-height: 1.8em;
+      }  
+      #radio a {
+	  padding: .1em;
+	  margin: .3em;
+	  border: 1px outset black;
+	  text-decoration: none;
+	  background: #cfc;
+      }
+    </style>
+
+    <script type="text/javascript" src="MochiKit-r1383.js"></script>
+    <script type="text/javascript" src="mpd.js"></script>
+    <script type="text/javascript" src="priv.js"></script>
+    <script type="text/javascript">
+      
+      MochiKit.DOM.addToCallStack(window, 'onload', function() {
+	  forEach(stations, function (nameUrl) { 
+	      var cmd = "javascript:playOne('" + nameUrl[1] + "'); return false;";
+	      $('radio').appendChild(A({href: cmd}, nameUrl[0]));
+	  });
+      });
+    </script>
+  </head>
+  <body>
+
+    <table style="width: 100%;">
+      <tr>
+	<td>
+	  <div>Downstairs</div>
+	  <div>Playing: Dj Rodriguez - Personality</div>
+	</td>
+	<td id="radio"></td>
+      </tr>
+    </table>
+
+  </body>
+</html>
