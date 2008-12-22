@@ -33,70 +33,85 @@ function observePlaylist(func) {
    connect(_mpdLog, 'playlistChanged', func);
 }
 
-/* 
-Run an mpd command. Pass args as a named dict. Set updateStatus to
-follow this call with a 'status' command, whose result would go to
-your status observers
-*/
-function callMpd(command, args, updateStatus) {
-    if (!args) {
-        args = {};
-    }
-    var d = doXHR("mpd/"+command, {method: "POST", 
-                                   sendContent: serializeJSON(args)});
-    d.addCallback(function (xhr) {
-        var result = evalJSONRequest(xhr);
-	signal(_mpdLog, 'lastCmd', command, args, result);
+var mpd = {}
+mpd.Mpd = function(site) {
+    /*
+      site is like 'http://localhost:9001/'
+    */
+    this.site = site;
+};
 
-	if (command == "status") {
-	    signal(_mpdLog, 'statusChanged', result);
-	}
+mpd.Mpd.prototype = {
+    __class__: mpd.Mpd,
 
-	if (updateStatus) {
-	    callMpd("status");
-	}
+    /* 
+      Run an mpd command. Pass args as a named dict. Set updateStatus to
+      follow this call with a 'status' command, whose result would go to
+      your status observers
 
-        return result;
-    });
-    return d;
-}
+    */
+    callMpd: function(command, args, updateStatus) {
+      if (!args) {
+          args = {};
+      }
+      var d = doXHR(this.site + "mpd/"+command, {
+	  method: "POST", 
+          sendContent: serializeJSON(args)
+      });
+      d.addCallback(method(this, function (xhr) {
+          var result = evalJSONRequest(xhr);
+  	  signal(_mpdLog, 'lastCmd', command, args, result);
 
-/*
-Clear playlist, add the given filename, and start playing it.
-*/
-function playOne(filename) {
-    callMpd("clear").addCallback(function (result) {
-        callMpd("add", {path: filename}).addCallback(function (result) {
-	    signal(_mpdLog, 'playlistChanged');
-	    callMpd("play", {songnum:0}, true);
-        });
-    });
-}
+  	  if (command == "status") {
+  	      signal(_mpdLog, 'statusChanged', result);
+  	  }
+	  
+  	  if (updateStatus) {
+  	      this.callMpd("status");
+  	  }
 
-/*
-Add the given filename and start playing it. Filename can be a directory.
-*/
-function addPlay(filename) {
+          return result;
+	}));
+      return d;
+    },
 
-    callMpd("status").addCallback(function(status) {
-	var lastPos = status['playlistlength'] - 1;
-	callMpd("add", {path: filename}, false).addCallback(function (result) {
-	    signal(_mpdLog, 'playlistChanged');
+    /*
+      Clear playlist, add the given filename, and start playing it.
+    */
+    playOne: function (filename) {
+	this.callMpd("clear").addCallback(method(this, function (result) {
+	    this.callMpd("add", {path: filename}).addCallback(
+		method(this, function (result) {
+		    signal(_mpdLog, 'playlistChanged');
+		    this.callMpd("play", {songnum:0}, true);
+		}));
+	}));
+    },
 
-	    callMpd("play", {songnum:lastPos+1}, true);
-	});
-    });
-}
+    /*
+      Add the given filename and start playing it. Filename can be a directory.
+    */
+    addPlay: function (filename) {
+	this.callMpd("status").addCallback(method(this, function(status) {
+	    var lastPos = status['playlistlength'] - 1;
+	    this.callMpd("add", {path: filename}, false).addCallback(
+		method(this, function (result) {
+		    signal(_mpdLog, 'playlistChanged');
+		    this.callMpd("play", {songnum:lastPos+1}, true);
+		}));
+	}));
+    },
 
-/*
-Play the song with the given playlist position
-*/
-function playPos(pos) {
-    callMpd("play", {songnum: pos}, true);
-}
+    /*
+      Play the song with the given playlist position
+    */
+    playPos: function (pos) {
+	this.callMpd("play", {songnum: pos}, true);
+    },
 
-function delId(id) {
-    callMpd("deleteid", {songid: id});
-    signal(_mpdLog, 'playlistChanged');
-    callMpd("status");
-}
+    delId: function (id) {
+	this.callMpd("deleteid", {songid: id});
+	signal(_mpdLog, 'playlistChanged');
+	this.callMpd("status");
+    },
+};

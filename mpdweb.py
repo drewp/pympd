@@ -7,7 +7,6 @@ most commands should accept POST only; status/etc should be GET
 
 
 
-
 """
 import sys, optparse, inspect
 from twisted.web import http, server, client
