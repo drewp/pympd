@@ -5,17 +5,15 @@ javascript-based players.
 todo:
 most commands should accept POST only; status/etc should be GET
 
+status should be able to return a 304 Not Modified
 
 
 """
 import sys, optparse, inspect
-from twisted.web import http, server, client
-from twisted.web.resource import Resource
 from twisted.internet import reactor, defer
-import twisted.web
 from twisted.python import log
-from zope.interface import implements, providedBy
-from nevow import json, rend, appserver, inevow, tags as T, loaders, static
+from zope.interface import implements
+from nevow import json, rend, appserver, inevow, loaders, static
 import pympd
 
 
@@ -70,7 +68,7 @@ class MpdCommand(object):
 
         mpdMethod = getattr(self.mpd, methodName)
         callArgs = argsFromPost(mpdMethod, postDataFromCtx(ctx))
-        print "Command: %s(%r)" % (mpdMethod, callArgs)
+        print "Command: %s(%r)" % (mpdMethod.__name__, callArgs)
         return JsonResult(mpdMethod(**callArgs)), []
 
     def child_lsinfoTree(self, ctx):
