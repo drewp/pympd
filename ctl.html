@@ -83,7 +83,7 @@
     function updatePlaylist() {
 	player.callMpd("playlistinfo").addCallback(function (songs) {
 	    function songRow(song) {
-		var deleteButton = A({href:'javascript:delId('+song.Id+')'}, "[X]");
+		var deleteButton = A({href:'javascript:player.delId('+song.Id+')'}, "[X]");
 		var playLink = A({href:'javascript:player.playPos('+song.Pos+')'}, 
          	    displayedName(song));
 		var addlData = DIV({id:'song-row-'+song.Pos}, null);
