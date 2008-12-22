@@ -36,7 +36,7 @@ function observePlaylist(func) {
 var mpd = {}
 mpd.Mpd = function(site) {
     /*
-      site is like 'http://localhost:9001/'
+      site is like 'http://localhost:9001/' or '/'
     */
     this.site = site;
 };
@@ -71,6 +71,11 @@ mpd.Mpd.prototype = {
   	  }
 
           return result;
+	}));
+	d.addErrback(method(this, function (err) {
+	    console.log("XHR failed:", err.message);
+	    // TODO: fire statusChanged with the message on an
+	    // appropriate attribute of the status obj
 	}));
       return d;
     },

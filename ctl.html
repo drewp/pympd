@@ -17,7 +17,7 @@
     <script type="text/javascript" src="mpd.js"></script>
     <script type="text/javascript" src="priv.js"></script>
     <script type="text/javascript">
-      var player = new mpd.Mpd("http://localhost:9001/");
+      var player = new mpd.Mpd("/");
     function updateStatus(status) {
         $('status').innerHTML = serializeJSON(status);
 	$('state').innerHTML = status.state;
@@ -107,7 +107,9 @@
     }   
 
     function setupLibraryTree() {
-	var loader = new Ext.tree.TreeLoader({dataUrl:'mpd/lsinfoTree'});	
+	var loader = new Ext.tree.TreeLoader({
+	    dataUrl:player.site + 'mpd/lsinfoTree'
+	});	
 
 	var selection = new Ext.tree.MultiSelectionModel();
 	var tree = new Ext.tree.TreePanel({
