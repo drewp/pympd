@@ -9,13 +9,14 @@ status should be able to return a 304 Not Modified
 
 
 """
-import sys, optparse, inspect
+import sys, optparse, inspect, logging
 from twisted.internet import reactor, defer
-from twisted.python import log
+import twisted.python.log
 from zope.interface import implements
 from nevow import json, rend, appserver, inevow, loaders, static
 import pympd
 
+log = logging.getLogger()
 
 def postDataFromCtx(ctx):
     content = inevow.IRequest(ctx).content
@@ -37,7 +38,7 @@ class JsonResult(object):
                 ret = result.jsonState()
             else:
                 ret = result
-            print "result", str(ret)[:1000]
+            log.debug("result %s", str(ret)[:1000])
             return json.serialize(ret)
 
         request = inevow.IRequest(ctx)
@@ -68,7 +69,7 @@ class MpdCommand(object):
 
         mpdMethod = getattr(self.mpd, methodName)
         callArgs = argsFromPost(mpdMethod, postDataFromCtx(ctx))
-        print "Command: %s(%r)" % (mpdMethod.__name__, callArgs)
+        log.debug("Command: %s(%r)", mpdMethod.__name__, callArgs)
         return JsonResult(mpdMethod(**callArgs)), []
 
     def child_lsinfoTree(self, ctx):
@@ -136,12 +137,18 @@ for attr, filename in [('MochiKit-r1383.js', 'MochiKit-r1383.js'),
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     parser = optparse.OptionParser()
     parser.add_option('-p', '--port', help='port to listen on',
                       type='int', default=9003)
+    parser.add_option('-d', '--debug', help='log all commands',
+                      action='store_true')
     opts, args = parser.parse_args()
 
-    log.startLogging(sys.stdout)
+    if opts.debug:
+        log.setLevel(logging.DEBUG)
+
+    twisted.python.log.startLogging(sys.stdout)
 
     reactor.listenTCP(opts.port, appserver.NevowSite(Mpdweb()))
     reactor.run()
