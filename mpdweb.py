@@ -120,21 +120,28 @@ class Mpdweb(rend.Page):
         # control auto-reconnect behavior?
         reactor.connectTCP('localhost', 6600, self.mpd)
 
-    def child_ctl(self, ctx):
-        return static.File("ctl.html")
-
     def child_mpd(self, ctx):
         """e.g. /mpd/pause"""
         return MpdCommand(self.mpd)        
 
-for attr, filename in [('MochiKit-r1383.js', 'MochiKit-r1383.js'),
-                       ('mpd.js', 'mpd.js'),
-                       ('ext-2.2', 'ext-2.2'),
-                       ('ctl.css', 'ctl.css'),
-                       ('priv.js', 'priv.js'),
-                       ]:
-    setattr(Mpdweb, 'child_'+attr, static.File(filename))
+for filename in ['MochiKit-r1383.js',
+                 'mpd.js',
+                 'ext-controls.js',
+                 'ext-2.2',
+                 'ctl.css',
+                 'priv.js',
+                 ]:
+    setattr(Mpdweb,
+            'child_'+filename.replace('.html', ''),
+            static.File(filename))
 
+for filename in ['ctl.html',
+                 'gadget.html',    
+                 ]:
+    f = static.File(filename)
+    f.type, f.encoding = 'application/xhtml+xml', 'UTF-8'
+    
+    setattr(Mpdweb, 'child_'+filename.replace('.html', ''), f)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
