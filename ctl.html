@@ -211,22 +211,16 @@
 	<td style="background: white"><div id="volume"></div></td>
 	<td>
 	  <div class="buttonBar">
-	    <form id="buttons" action="post">
-	      <div>
-		<input type="submit" value="playone" 
-		       onclick="playOne('05_Ultramarine.mp3'); return false"/>
-		<input type="submit" value="play / pause" 
-		       onclick="callMpd('pause', {}, true); return false"/>
-		<input type="submit" value="stop" 
-		       onclick="callMpd('stop', {}, true); return false"/>
-		<input type="submit" value="seek :10" 
-		       onclick="callMpd('seek', {seconds:10}, true); return false"/>
-		
-	      </div>
-	      <div id="radio">
-	      </div>
-	      
-	    </form>
+	    <input type="submit" value="playone" 
+		   onclick="playOne('05_Ultramarine.mp3'); return false"/>
+	    <input type="submit" value="play / pause" 
+		   onclick="player.callMpd('pause', {}, true); return false"/>
+	    <input type="submit" value="stop" 
+		   onclick="player.callMpd('stop', {}, true); return false"/>
+	    <input type="submit" value="seek :10" 
+		   onclick="player.callMpd('seek', {seconds:10}, true); return false"/>
+	    <div id="radio">
+	    </div>
 	  </div>
 	</td>
       </tr>
@@ -238,23 +232,21 @@
     <div id="playlist">
     </div>
 
-    <form action="post">
-      <div class="buttonBar">
-	<input type="submit" value="clear playlist" 
-	       onclick="player.callMpd('clear').addCallback(playlistChanged); return false"/>	
-      </div>
-    </form>
+    <div class="buttonBar">
+      <input type="submit" value="clear playlist" 
+	     onclick="player.callMpd('clear').addCallback(playlistChanged); return false"/>	
+    </div>
     
     <div style="clear:right"/>
 
-    <form action="post">
-      <div class="buttonBar">
-	<input type="submit" value="Freshen status" 
-	       onclick="player.callMpd('status'); return false"/>
-	<input type="submit" value="Freshen playlist" 
-	       onclick="updatePlaylist(); return false"/>
-      </div>
-    </form>
+
+    <div class="buttonBar">
+      <input type="submit" value="Freshen status" 
+	     onclick="player.callMpd('status'); return false"/>
+      <input type="submit" value="Freshen playlist" 
+	     onclick="updatePlaylist(); return false"/>
+    </div>
+
 
     Status:
     <div id="status"></div>
@@ -270,16 +262,17 @@
 	OK track current song time and change
 	OK playlistinfo for current song names
 	OK volume
+        OK fix web logs
+        OK fix volume ctl url; just serve extjs at toplevel
+        OK use ext CDN
+        widget
         get the http methods right
-        fix web logs
-        fix volume ctl url; just serve extjs at toplevel
 	close cvs, update pypi, rename for other proj?
         get ACS pods
 	seeker
 	simpler alternate players, like for treo
 	pretty
 	delete related adjacent songs
-        widget
         keyboard shortcuts on all buttons
     </div>
 <a href="">refresh</a>
