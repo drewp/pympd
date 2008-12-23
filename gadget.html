@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title></title>
+
+    <link rel="stylesheet" type="text/css" href="http://extjs.cachefly.net/ext-2.2/resources/css/ext-all.css" />
+    <script type="text/javascript" src="MochiKit-r1383.js"></script>
+    <script type="text/javascript" src="http://extjs.cachefly.net/builds/ext-cdn-428.js"></script>
+    <script type="text/javascript">
+      Ext.BLANK_IMAGE_URL = "ext-2.2/resources/images/default/s.gif";
+    </script>
+    <script type="text/javascript" src="mpd.js"></script>
+    <script type="text/javascript" src="ext-controls.js"></script>
+    <script type="text/javascript">
+      // <![CDATA[
+      var player = new mpd.Mpd("");
+      var volumeSlider;
+
+      function updateStatus(status) {
+	  $('status').innerHTML = serializeJSON(status);
+
+	  $("playPause").innerHTML = (status.state == "play") ? "<b>&#8214;</b>" : "&#9654;";
+
+	  volumeSlider.setValue(status.volume);
+
+	  player.callMpd("playlistinfo", {song: status.song}).addCallback(
+	      function (info) {
+		  $('playing').innerHTML = info[0].Title;
+	      });
+      }
+
+      MochiKit.DOM.addToCallStack(window, 'onload',     function() {
+	  //logMpdCommands('lastCmd');
+	  volumeSlider = createVolumeSlider($('volume'), player, 
+					    {vertical: false, width: 180});
+	  observeStatus(updateStatus);
+	  //observePlaylist(updatePlaylist);
+
+	  player.callMpd("status");
+	//  updatePlaylist();
+	//  setupLibraryTree();
+	//  addRadio();
+	  startPolling(player);
+      });
+
+      // ]]>
+    </script>
+    <style type="text/css">
+
+      #box {
+	  background: #aaf;
+	  width: 200px; 
+	  height: 200px;
+      }
+
+      #volume {
+	  position: absolute;
+	  width: 180;
+	  height: 20;
+	  left: 10px;
+	  top: 160px;
+      }
+      #controlFrame {
+	  background: black;
+	  -moz-border-radius: 5px;
+	  height:59px;
+	  left:5px;
+	  opacity:0.5;
+	  position:absolute;
+	  top:125px;
+	  width:190px;
+      }
+      #playPause {
+	  left:84px;
+	  position:absolute;
+	  top:127px;
+	  cursor: pointer;
+	  width: 1em;
+	  text-align: center;
+      }
+
+    </style>
+
+  </head>
+  <body style="background: #aaa">
+
+    <div id="box">
+
+      <div>
+	<span id="curTime"></span><div id="seek" /><span id="leftTime" />
+      </div>
+
+      <div id="status" style="position: absolute; top: 300px"></div>
+
+      <div id="controlFrame"></div>
+
+      <div onclick="javascript:player.callMpd('pause', {}, true)" 
+	   id="playPause"> </div>
+
+      <div id="volume"></div>
+
+    </div>
+
+  </body>
+</html>
