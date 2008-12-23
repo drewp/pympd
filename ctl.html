@@ -5,19 +5,20 @@
   <head>
     <title>MPD control</title>
 
-    <link rel="stylesheet" type="text/css" href="ext-all.css" />
+    <link rel="stylesheet" type="text/css" href="ext-2.2/resources/css/ext-all.css" />
     <link rel="stylesheet" type="text/css" href="ctl.css" />
 
     <script type="text/javascript" src="MochiKit-r1383.js"></script>
-    <script type="text/javascript" src="ext-base.js"></script>
+    <script type="text/javascript" src="ext-2.2/adapter/ext/ext-base.js"></script>
     <script type="text/javascript">
-      Ext.BLANK_IMAGE_URL = "images/default/s.gif";
+      Ext.BLANK_IMAGE_URL = "ext-2.2/resources/images/default/s.gif";
     </script>
-    <script type="text/javascript" src="ext-all.js"></script>
+    <script type="text/javascript" src="ext-2.2/ext-all.js"></script>
     <script type="text/javascript" src="mpd.js"></script>
     <script type="text/javascript" src="priv.js"></script>
     <script type="text/javascript">
-      var player = new mpd.Mpd("/");
+      // <![CDATA[
+      var player = new mpd.Mpd("");
 
       var volumeSlider;
 
@@ -201,7 +202,7 @@
     }
 
     MochiKit.DOM.addToCallStack(window, 'onload', go);
-
+      // ]]>
     </script>
   </head>
   <body>
@@ -212,7 +213,7 @@
 	<td style="background: white"><div id="volume"></div></td>
 	<td>
 	  <div class="buttonBar">
-	    <form id="buttons">
+	    <form id="buttons" action="post">
 	      <div>
 		<input type="submit" value="playone" 
 		       onclick="playOne('05_Ultramarine.mp3'); return false"/>
@@ -239,24 +240,23 @@
     <div id="playlist">
     </div>
 
-    <div class="buttonBar">
-      <form>
+    <form action="post">
+      <div class="buttonBar">
 	<input type="submit" value="clear playlist" 
-	       onclick="player.callMpd('clear').addCallback(playlistChanged); return false"/>
-      </form>
-      
-    </div>
+	       onclick="player.callMpd('clear').addCallback(playlistChanged); return false"/>	
+      </div>
+    </form>
     
     <div style="clear:right"/>
 
-    <div class="buttonBar">
-      <form>
-	  <input type="submit" value="Freshen status" 
-		 onclick="player.callMpd('status'); return false"/>
-	  <input type="submit" value="Freshen playlist" 
-		 onclick="updatePlaylist(); return false"/>
-      </form>
-    </div>
+    <form action="post">
+      <div class="buttonBar">
+	<input type="submit" value="Freshen status" 
+	       onclick="player.callMpd('status'); return false"/>
+	<input type="submit" value="Freshen playlist" 
+	       onclick="updatePlaylist(); return false"/>
+      </div>
+    </form>
 
     Status:
     <div id="status"></div>

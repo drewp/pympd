@@ -128,10 +128,7 @@ class Mpdweb(rend.Page):
 
 for attr, filename in [('MochiKit-r1383.js', 'MochiKit-r1383.js'),
                        ('mpd.js', 'mpd.js'),
-                       ('ext-all.js', 'ext-2.2/ext-all.js'),
-                       ('ext-base.js', 'ext-2.2/adapter/ext/ext-base.js'),
-                       ('ext-all.css', 'ext-2.2/resources/css/ext-all.css'),
-                       ('images', 'ext-2.2/resources/images'),
+                       ('ext-2.2', 'ext-2.2'),
                        ('ctl.css', 'ctl.css'),
                        ('priv.js', 'priv.js'),
                        ]:
