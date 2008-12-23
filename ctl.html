@@ -13,6 +13,7 @@
     </script>
 
     <script type="text/javascript" src="mpd.js"></script>
+    <script type="text/javascript" src="ext-controls.js"></script>
     <script type="text/javascript" src="priv.js"></script>
     <script type="text/javascript">
       // <![CDATA[
@@ -167,28 +168,10 @@
 	});
     }
 
-    function startPolling() {
-	Ext.TaskMgr.start({run: function() { player.callMpd("status") },
-			   interval: 5000});
-    }
-
-      function createVolumeSlider(parent) {
-	  volumeSlider = new Ext.Slider({
-	      renderTo: parent,
-	      increment: 3,
-	      minValue: 0,
-	      maxValue: 100,
-	      height: 70,
-	      vertical: true
-	  });
-	  volumeSlider.addListener('change', function (sld, value) {
-	      player.callMpd("setvol", {vol: value})
-	  });
-      }
 
     function go() {
 	//logMpdCommands('lastCmd');
-	createVolumeSlider($('volume'));
+	volumeSlider = createVolumeSlider($('volume'), player);
 	observeStatus(updateStatus);
 	observePlaylist(updatePlaylist);
 
@@ -196,7 +179,7 @@
 	updatePlaylist();
 	setupLibraryTree();
 	addRadio();
-	startPolling();
+	startPolling(player);
     }
 
     MochiKit.DOM.addToCallStack(window, 'onload', go);
