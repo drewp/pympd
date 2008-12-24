@@ -17,6 +17,19 @@
       // <![CDATA[
       var player = new mpd.Mpd("");
       var volumeSlider;
+      var seekSlider;
+
+      function updateSeek(elapsed, total) { 
+	  var remaining = total - elapsed;
+
+	  $('curTime').innerHTML = MochiKit.Text.format("{0:01d}:{1:02d}", elapsed / 60, elapsed % 60);
+	  $('leftTime').innerHTML = MochiKit.Text.format("-{0:01d}:{1:02d}", remaining / 60, remaining % 60);
+
+	  seekSlider.mpdTotalTime = total;
+	  seekSlider.changeFromServer = true;
+	  seekSlider.setValue(1000 * elapsed / total);
+	  seekSlider.changeFromServer = false;
+      }
 
       function updateStatus(status) {
 	  $('status').innerHTML = serializeJSON(status);
@@ -38,10 +51,13 @@
 	      });
       }
 
-      MochiKit.DOM.addToCallStack(window, 'onload',     function() {
+      MochiKit.DOM.addToCallStack(window, 'onload', function() {
 	  //logMpdCommands('lastCmd');
 	  volumeSlider = createVolumeSlider($('volume'), player, 
 					    {vertical: false, width: 180});
+
+	  seekSlider = createSeekSlider($('seek'), player);
+
 	  observeStatus(updateStatus);
 	  //observePlaylist(updatePlaylist);
 
@@ -86,6 +102,7 @@
 	  cursor: pointer;
 	  width: 1em;
 	  text-align: center;
+	  color: white;
       }
 
     </style>
@@ -95,11 +112,17 @@
 
     <div id="box">
 
-      <div>
-	<span id="curTime"></span><div id="seek" /><span id="leftTime" />
-      </div>
+      <table>
+	<tr>
+	  <td><span id="curTime"/></td>
+	  <td><div id="seek"/></td>
+	  <td><span id="leftTime"/></td>
+	</tr>
+      </table>
 
       <div id="status" style="position: absolute; top: 300px"></div>
+
+      <div id="playing"></div>
 
       <div id="controlFrame"></div>
 
