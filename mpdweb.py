@@ -136,7 +136,8 @@ for filename in ['MochiKit-custom1.js',
             static.File(filename))
 
 for filename in ['ctl.html',
-                 'gadget.html',    
+                 'gadget.html',
+                 'library.html',
                  ]:
     f = static.File(filename)
     f.type, f.encoding = 'application/xhtml+xml', 'UTF-8'
