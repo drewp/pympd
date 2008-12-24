@@ -21,6 +21,13 @@
       function updateStatus(status) {
 	  $('status').innerHTML = serializeJSON(status);
 
+	  if (status.time) {
+	      var t = status.time.split(':');
+	      var elapsed = parseInt(t[0]);
+	      var total = parseInt(t[1]);
+	      updateSeek(elapsed, total);
+	  }
+
 	  $("playPause").innerHTML = (status.state == "play") ? "<b>&#8214;</b>" : "&#9654;";
 
 	  volumeSlider.setValue(status.volume);

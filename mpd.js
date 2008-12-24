@@ -73,7 +73,7 @@ mpd.Mpd.prototype = {
           return result;
 	}));
 	d.addErrback(method(this, function (err) {
-	    console.log("XHR failed:", err.message);
+	    console.log("XHR failed:", err);
 	    // TODO: fire statusChanged with the message on an
 	    // appropriate attribute of the status obj
 	}));
@@ -119,4 +119,5 @@ mpd.Mpd.prototype = {
 	signal(_mpdLog, 'playlistChanged');
 	this.callMpd("status");
     },
+    
 };

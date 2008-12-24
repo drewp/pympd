@@ -59,6 +59,9 @@
 	}
 
 	var playingRow = $('playlist').childNodes[num];
+	if (playingRow == null) {
+	    return;
+	}
 	addElementClass(playingRow, "playing");
 	$('playlist').setAttribute("playingRow", num);
     }
