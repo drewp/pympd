@@ -124,7 +124,7 @@ class Mpdweb(rend.Page):
         """e.g. /mpd/pause"""
         return MpdCommand(self.mpd)        
 
-for filename in ['MochiKit-r1383.js',
+for filename in ['MochiKit-custom1.js',
                  'mpd.js',
                  'ext-controls.js',
                  'ext-2.2',
