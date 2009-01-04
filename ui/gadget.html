@@ -41,14 +41,6 @@
 	      updateSeek(elapsed, total);
 	  }
 
-	  $("playPause").innerHTML = (status.state == "play") ? "<b>&#8214;</b>" : "&#9654;";
-
-	  volumeSlider.setValue(status.volume);
-
-	  player.callMpd("playlistinfo", {song: status.song}).addCallback(
-	      function (info) {
-		  $('playing').innerHTML = info[0].Title;
-	      });
       }
 
       MochiKit.DOM.addToCallStack(window, 'onload', function() {
@@ -58,14 +50,18 @@
 
 	  seekSlider = createSeekSlider($('seek'), player);
 
+	  player.on('playState', function (state) {
+	      $("playPause").innerHTML = (state == "play") ? 
+		  "<b>&#8214;</b>" : "&#9654;";
+	  });
+	  player.on('currentSong', function (name) {
+	      $('playing').innerHTML = name;
+	  });
+
 	  observeStatus(updateStatus);
-	  //observePlaylist(updatePlaylist);
 
 	  player.callMpd("status");
-	//  updatePlaylist();
-	//  setupLibraryTree();
-	//  addRadio();
-	  startPolling(player);
+	  player.startPolling();
       });
 
       // ]]>
