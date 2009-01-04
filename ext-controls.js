@@ -5,11 +5,6 @@
 */
 
 
-function startPolling(player) {
-    Ext.TaskMgr.start({run: function() { player.callMpd("status") },
-		       interval: 5000});
-}
-
 function createVolumeSlider(parent, player, sliderOpts) {
 
     if (!sliderOpts) {
@@ -30,6 +25,11 @@ function createVolumeSlider(parent, player, sliderOpts) {
 			     function (sld, value) {
 				 player.callMpd("setvol", {vol: value})
 			     });
+
+    player.on('statusChanged', function(status) {
+	volumeSlider.setValue(status.volume);
+    });
+
     return volumeSlider;
 }
 
@@ -63,19 +63,25 @@ function createSeekSlider(parent, player, sliderOpts) {
     return seekSlider;
 }
 
-
-function setupLibraryTree(player) {
-    var loader = new Ext.tree.TreeLoader({
-	dataUrl: player.site + 'mpd/lsinfoTree'
-    });	
-
+/* 
+  render an ext tree widget in the given element id. There will be
+  buttons to add selected songs to the current playlist.  
+*/
+function setupLibraryTree(player, parent) {
     var selection = new Ext.tree.MultiSelectionModel();
     var tree = new Ext.tree.TreePanel({
-        renderTo:'tree-div',
+        renderTo: parent,
+	dataUrl: player.site + 'mpd/lsinfoTree',
         autoScroll:true,
         animate:true,
         containerScroll: true, 
-        loader: loader,
+	root: {
+	    nodeType: 'async',
+	    text: 'Music Library',
+	    draggable: false,
+	    id: '/',
+	},
+
 	selModel: selection,
 	bbar: [{text:"Add", 
 		handler:function(ev){
@@ -92,14 +98,6 @@ function setupLibraryTree(player) {
 		},
 	       }],
     });
-
-    var root = new Ext.tree.AsyncTreeNode({
-        text: 'Music Library',
-        draggable:false,
-        id:'/'
-    });
-    tree.setRootNode(root);
-
     // oops, this is also trapping attempts to expand albums. those 
     // should probably go back to expand/collapse, not addPlay
     tree.addListener('dblclick', function (node, ev) {
@@ -108,7 +106,7 @@ function setupLibraryTree(player) {
     // how do i bind return-key to the same action?
 
     //tree.render();
-    //root.expand();
+    tree.getRootNode().expand();
 
     return tree;
 }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>MPD control</title>
+    <link rel="stylesheet" type="text/css" 
+	  href="http://extjs.cachefly.net/ext-2.2/resources/css/ext-all.css" />
+    <script type="text/javascript" src="MochiKit-custom1.js"></script>
+    <script type="text/javascript" 
+	    src="http://extjs.cachefly.net/builds/ext-cdn-428.js"></script>
+    <script type="text/javascript">
+      Ext.BLANK_IMAGE_URL = 
+        "http://extjs.cachefly.net/ext-2.2/resources/images/default/s.gif";
+    </script>
+    <script type="text/javascript" src="mpd.js"></script>
+    <script type="text/javascript" src="ext-controls.js"></script>
+    <script type="text/javascript">
+      // <![CDATA[
+      var player = new mpd.Mpd("");
+
+      MochiKit.DOM.addToCallStack(window, 'onload', function () { 
+	  volumeSlider = createVolumeSlider($('volume'), player);
+	  player.startPolling();
+      });
+      // ]]>
+    </script>
+  </head>
+  <body>
+
+    Volume control demo:
+
+    <div id="volume"/>
+
+  </body>
+</html>

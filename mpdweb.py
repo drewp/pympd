@@ -9,11 +9,11 @@ status should be able to return a 304 Not Modified
 
 
 """
-import sys, optparse, inspect, logging
+import sys, optparse, inspect, logging, os
 from twisted.internet import reactor, defer
 import twisted.python.log
 from zope.interface import implements
-from nevow import json, rend, appserver, inevow, loaders, static
+from nevow import json, rend, appserver, inevow, loaders, static, tags as T
 import pympd
 
 log = logging.getLogger()
@@ -112,7 +112,11 @@ def argsFromPost(method, postData):
     return callArgs
 
 class Mpdweb(rend.Page):
-    docFactory = loaders.stan(["mpdweb server"])
+    docFactory = loaders.stan(T.html[T.body[
+        T.h1["mpdweb server"],
+        T.directive('pages'),
+        ]])
+    pages = []
     def __init__(self):
         rend.Page.__init__(self)
         self.mpd = pympd.Mpd(requireFloatTimes=False)
@@ -120,29 +124,43 @@ class Mpdweb(rend.Page):
         # control auto-reconnect behavior?
         reactor.connectTCP('localhost', 6600, self.mpd)
 
+    def render_pages(self, ctx, data):
+        for p in self.pages:
+            yield T.li[T.a(href=p)[p]]
+        
     def child_mpd(self, ctx):
         """e.g. /mpd/pause"""
         return MpdCommand(self.mpd)        
+
+for filename in ['ctl.html',
+                 'gadget.html',
+                 'library.html',
+                 'playlist.html',
+                 'volume.html',
+                 'current.html',
+                 'ctl.css',
+                 ]:
+    f = static.File(os.path.join('ui', filename))
+
+    # i'll need this content-type if I do inline SVG graphics, but it
+    # causes some things to break, like the extjs tree widget. Some
+    # innerHTML gets set that's not valid XML, I think. Konqueror
+    # seems to do fine.
+    # https://bugzilla.mozilla.org/show_bug.cgi?id=155723
+    # and https://bugzilla.mozilla.org/show_bug.cgi?id=466751
+    #f.type, f.encoding = 'application/xhtml+xml', 'UTF-8'
+
+    shortName = filename.replace('.html', '')
+    setattr(Mpdweb, 'child_' + shortName, f)
+    Mpdweb.pages.append(shortName)
 
 for filename in ['MochiKit-custom1.js',
                  'mpd.js',
                  'ext-controls.js',
                  'ext-2.2',
-                 'ctl.css',
                  'priv.js',
                  ]:
-    setattr(Mpdweb,
-            'child_'+filename.replace('.html', ''),
-            static.File(filename))
-
-for filename in ['ctl.html',
-                 'gadget.html',
-                 'library.html',
-                 ]:
-    f = static.File(filename)
-    f.type, f.encoding = 'application/xhtml+xml', 'UTF-8'
-    
-    setattr(Mpdweb, 'child_'+filename.replace('.html', ''), f)
+    setattr(Mpdweb, 'child_'+filename, static.File(filename))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

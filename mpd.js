@@ -1,5 +1,6 @@
 // uses MochiKit
 
+// this should be made internal to the player
 _mpdLog = {};
 
 /*
@@ -64,6 +65,8 @@ mpd.Mpd.prototype = {
 
   	  if (command == "status") {
   	      signal(_mpdLog, 'statusChanged', result);
+	      this._currentSong(result);
+	      this._playState(result);
   	  }
 	  
   	  if (updateStatus) {
@@ -78,6 +81,51 @@ mpd.Mpd.prototype = {
 	    // appropriate attribute of the status obj
 	}));
       return d;
+    },
+
+    /*
+      send 'currentSong' event if the current song has changed. The
+      event has one argument, which is some displayable name for the
+      song.
+
+      In fact, there are sometimes 3+ relevant titles for what's
+      playing, so this may need to be expanded with a richer return
+      value.
+
+      We probably need a method that forces a currentSong event, for
+      when a UI forgets the last currentSong result.  
+    */
+    _currentSong: function (status) {
+	if (status.songid != this._lastCurrentSongId || 
+	    this._isPlayingStream()) {
+	    this._lastCurrentSongId = status.songid;
+	    player.callMpd("currentsong", {}).addCallback(
+		method(this, function (info) {
+		    signal(_mpdLog, 'currentSong', 
+			   info.Title || info.Name || info.file);
+		    this._currentFile = info.file;
+		}));
+	}
+    },
+
+
+    /*
+      send 'playState' event if the play state has changed. The
+      event will get a string 'play', 'stop', or 'pause'
+    */
+    _playState: function (status) {
+	if (status.state != this._lastPlayState) {
+	    this._lastPlayState = status.state;
+	    signal(_mpdLog, 'playState', status.state);
+	}
+    },
+
+    /*
+       Is the currently playing song a stream that could contain changing 
+       name/title fields?
+    */
+    _isPlayingStream: function () {
+	return MochiKit.Text.startsWith('http://', this._currentFile);
     },
 
     /*
@@ -119,5 +167,21 @@ mpd.Mpd.prototype = {
 	signal(_mpdLog, 'playlistChanged');
 	this.callMpd("status");
     },
+
+    /*
+      request status every 5 seconds. This fires various mochikit signals
+    */
+    startPolling: function() {
+	Ext.TaskMgr.start({run: function() { this.callMpd("status") },
+			   interval: 5000,
+			   scope: this});
+    },
+
+    // API modeled after extjs's. They have some other args that I'm
+    // not taking, yet. I could just use the extjs Observable
+    // superclass, but so far this module is independent of extjs.
+    on: function(signal, handler) {
+	connect(_mpdLog, signal, handler);
+    }
     
 };

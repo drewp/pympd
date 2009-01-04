@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
-"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>MPD control</title>
@@ -27,8 +25,6 @@
 	$('state').setAttribute('class', 'state state-'+status.state);
 	// 'error' key should be displayed. to get one, add a bogus http:// path
 	updatePlayingRow(status.song);
-	updatePlayingSong(status.song);
-	volumeSlider.setValue(status.volume);
     }
 
     /*
@@ -134,9 +130,10 @@
 
 	player.callMpd("status");
 	updatePlaylist();
-	setupLibraryTree();
+	setupLibraryTree(player, 'tree-div');
 	addRadio();
-	startPolling(player);
+	//player.on('currentSong', onCurrentSongName);
+	player.startPolling();
     }
 
     MochiKit.DOM.addToCallStack(window, 'onload', go);
