@@ -34,7 +34,6 @@
     */
     function updatePlayingSong(song) {
 	player.callMpd("playlistinfo", {song: song}).addCallback(function (info) {
-	    console.log(info);
 	    var addlData = $('song-row-' + info[0].Pos);
 	    replaceChildNodes(addlData, [DIV({}, info[0].Title)]);
 	    
