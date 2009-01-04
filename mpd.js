@@ -3,7 +3,7 @@
 // this should be made internal to the player
 _mpdLog = {};
 
-/*
+/**
 Add <li> children to this node for each command we send to mpd
 */
 function logMpdCommands(node) {
@@ -18,14 +18,14 @@ function logMpdCommands(node) {
     connect(_mpdLog, 'lastCmd', append);
 }
 
-/*
+/**
  Call func with a status object whenever the mpd status might have changed.
 */
 function observeStatus(func) {
     connect(_mpdLog, 'statusChanged', func);
 }
 
-/* 
+/**
 Call func *with nothing* whenever the playlist might have
 changed. Func has to get the playlist itself if it wants to know the
 new contents.
@@ -36,7 +36,7 @@ function observePlaylist(func) {
 
 var mpd = {}
 mpd.Mpd = function(site) {
-    /*
+    /**
       site is like 'http://localhost:9001/' or '/'
     */
     this.site = site;
@@ -45,7 +45,7 @@ mpd.Mpd = function(site) {
 mpd.Mpd.prototype = {
     __class__: mpd.Mpd,
 
-    /* 
+    /**
       Run an mpd command. Pass args as a named dict. Set updateStatus to
       follow this call with a 'status' command, whose result would go to
       your status observers
@@ -83,7 +83,7 @@ mpd.Mpd.prototype = {
       return d;
     },
 
-    /*
+    /**
       send 'currentSong' event if the current song has changed. The
       event has one argument, which is some displayable name for the
       song.
@@ -97,6 +97,7 @@ mpd.Mpd.prototype = {
     */
     _currentSong: function (status) {
 	if (status.songid != this._lastCurrentSongId || 
+	    // hey- if state != play, don't re-poll here
 	    this._isPlayingStream()) {
 	    this._lastCurrentSongId = status.songid;
 	    player.callMpd("currentsong", {}).addCallback(
@@ -109,7 +110,7 @@ mpd.Mpd.prototype = {
     },
 
 
-    /*
+    /**
       send 'playState' event if the play state has changed. The
       event will get a string 'play', 'stop', or 'pause'
     */
@@ -120,7 +121,7 @@ mpd.Mpd.prototype = {
 	}
     },
 
-    /*
+    /**
        Is the currently playing song a stream that could contain changing 
        name/title fields?
     */
@@ -128,7 +129,7 @@ mpd.Mpd.prototype = {
 	return MochiKit.Text.startsWith('http://', this._currentFile);
     },
 
-    /*
+    /**
       Clear playlist, add the given filename, and start playing it.
     */
     playOne: function (filename) {
@@ -141,7 +142,7 @@ mpd.Mpd.prototype = {
 	}));
     },
 
-    /*
+    /**
       Add the given filename and start playing it. Filename can be a directory.
     */
     addPlay: function (filename) {
@@ -155,7 +156,7 @@ mpd.Mpd.prototype = {
 	}));
     },
 
-    /*
+    /**
       Play the song with the given playlist position
     */
     playPos: function (pos) {
@@ -168,7 +169,7 @@ mpd.Mpd.prototype = {
 	this.callMpd("status");
     },
 
-    /*
+    /**
       request status every 5 seconds. This fires various mochikit signals
     */
     startPolling: function() {
