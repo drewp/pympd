@@ -3,7 +3,7 @@ from distutils.extension import Extension
 from Pyrex.Distutils import build_ext
 setup(
   name = "pympd",
-  version="1.0",
+  version="1.2",
   description="twisted interface to MPD (www.musicpd.org)",
   
   long_description="""An alternative to the commonly-used mpdclient
@@ -21,13 +21,21 @@ between mpdclient and pympd:
 - pympd supports my mpd patch for fractional-second accurate times,
   and might even reject unpatched mpds
 
-cvs -z3 -d :pserver:anonymous@bigasterisk.com:/srcmirror co pympd
+Get the source with:
+darcs get http://darcs.bigasterisk.com/pympd
+
+Browse the source here:
+http://bigasterisk.com/darcs/?r=pympd;a=tree
+
+See also:
+http://github.com/magcius/python-mpd (very similar project)
+http://github.com/magcius/mpdsetup (query language using python-mpd)
 """,
   
   author="Drew Perttula",
   author_email="drewp@bigasterisk.com",
   url="http://bigasterisk.com",
-  download_url="http://projects.bigasterisk.com/pympd-1.0.tar.gz",
+  download_url="http://projects.bigasterisk.com/pympd-1.2.tar.gz",
   classifiers=[
     'Development Status :: 5 - Production/Stable',
     'Operating System :: POSIX :: Linux',

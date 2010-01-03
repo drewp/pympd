@@ -1,5 +1,7 @@
 # python interface to mpd using twisted
 
+__version__ = "1.2"
+
 from twisted.internet import defer, protocol, reactor
 from twisted.protocols import basic
 import logging
