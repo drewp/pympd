@@ -22,13 +22,17 @@ between mpdclient and pympd:
   and might even reject unpatched mpds
 
 Get the source with:
+
 darcs get http://darcs.bigasterisk.com/pympd
 
 Browse the source here:
+
 http://bigasterisk.com/darcs/?r=pympd;a=tree
 
 See also:
+
 http://github.com/magcius/python-mpd (very similar project)
+
 http://github.com/magcius/mpdsetup (query language using python-mpd)
 """,
   
