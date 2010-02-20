@@ -83,7 +83,7 @@ function setupLibraryTree(player, parent) {
 	},
 
 	selModel: selection,
-	bbar: [{text:"Add", 
+	tbar: [{text:"Add", 
 		handler:function(ev){
 		    chain = succeed();
 		    forEach(selection.getSelectedNodes(), function (node) {

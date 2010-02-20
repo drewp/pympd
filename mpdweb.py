@@ -9,7 +9,7 @@ status should be able to return a 304 Not Modified
 
 
 """
-import sys, optparse, inspect, logging, os
+import sys, optparse, inspect, logging, os, urlparse
 from twisted.internet import reactor, defer
 import twisted.python.log
 from zope.interface import implements
@@ -68,7 +68,7 @@ class MpdCommand(object):
             raise ValueError("command: %s" % methodName)
 
         mpdMethod = getattr(self.mpd, methodName)
-        callArgs = argsFromPost(mpdMethod, postDataFromCtx(ctx))
+        callArgs = argsFromPostOrGet(mpdMethod, postDataFromCtx(ctx), ctx)
         log.debug("Command: %s(%r)", mpdMethod.__name__, callArgs)
         return JsonResult(mpdMethod(**callArgs)), []
 
@@ -92,13 +92,17 @@ class MpdCommand(object):
 
         return "[{id:1,text:'hi',leaf:true}]"
 
-def argsFromPost(method, postData):
-    """return an args dict based on the json-encoded postdata,
+def argsFromPostOrGet(method, postData, ctx):
+    """return an args dict based on the json-encoded postdata (or form urlencoded),
     considering only args that the method callable accepts"""
     postArgs = {}
     if postData:
-        postArgs = json.parse(postData)
 
+        if inevow.IRequest(ctx).getHeader('Content-Type').startswith("application/x-www-form-urlencoded"):
+            postArgs = dict(urlparse.parse_qsl(postData))
+        else:
+            postArgs = json.parse(postData)
+    print "postArgs", repr(postArgs)
     acceptedArgs, _, _, _ = inspect.getargspec(method)
     callArgs = {}
     for name in acceptedArgs:
@@ -109,6 +113,8 @@ def argsFromPost(method, postData):
             if isinstance(v, unicode):
                 v = v.encode('utf-8')
             callArgs[name] = v
+        elif ctx.arg(name):
+            callArgs[name] = ctx.arg(name)
     return callArgs
 
 class Mpdweb(rend.Page):

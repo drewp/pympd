@@ -4,7 +4,7 @@ __version__ = "1.2"
 
 from twisted.internet import defer, protocol, reactor
 from twisted.protocols import basic
-import logging
+import logging, os
 logging.basicConfig()
 log = logging.getLogger("mpd")
 #log.setLevel(logging.DEBUG)
@@ -160,7 +160,7 @@ class Status(ResultDict):
 
 
 class Mpd(QueueingCommandClientFactory):
-    """http://mpd.wikicities.com/wiki/MusicPlayerDaemonCommands
+    """http://www.musicpd.org/doc/protocol/
     (someone should put those descriptions into docstrings here, for
     better pydoc"""
     
@@ -240,27 +240,28 @@ class Mpd(QueueingCommandClientFactory):
             return d
         return self.send("status").addCallback(parse)
 
+    def _songListParse(self, result):
+        songs = Songs()
+
+        for line in result:
+            if line.startswith("file: "):
+                songs.append(Song())
+
+            if songs:
+                colonDictParse([line], songs[-1])
+            # else, we might be getting the wrong response? it's
+            # only happened once and it wasn't repeatable
+        return songs
+
     def playlistinfo(self, song=None):
         """returns list of song objects with file, Time, Pos, and Id
         attributes (with that capitalization). Optional arg song is a
         playlist position."""
-        def parse(result):
-            songs = Songs()
-
-            for line in result:
-                if line.startswith("file: "):
-                    songs.append(Song())
-
-                if songs:
-                    colonDictParse([line], songs[-1])
-                # else, we might be getting the wrong response? it's
-                # only happened once and it wasn't repeatable
-            return songs
 
         songpart = ""
         if song is not None:
             songpart = " %s" % song
-        return self.send("playlistinfo%s" % songpart).addCallback(parse)
+        return self.send("playlistinfo%s" % songpart).addCallback(self._songListParse)
 
     def lsinfo(self, directory="/"):
         """list of tuples like ('directory', fullPath) or
@@ -284,7 +285,22 @@ class Mpd(QueueingCommandClientFactory):
                     pass
             return ret
         return self.send("lsinfo %s" % directory).addCallback(parse)
-        
+
+    def list(self, type, whereType=None, whereValue=None):
+        """list of tuples of matches of the given type, with an optional constraint.
+        type can be 'genre', etc"""
+        def parse(lines):
+            ret = []
+            for line in lines:
+                ret.append(tuple(w.decode('utf8') for w in line.split(': ', 1)))
+            return ret
+        return self.send("list %s %s %s" % (
+            type, whereType or '', whereValue or '')
+                         ).addCallback(parse)
+
+    def search(self, type, query):
+        """file results are split into (dir,file)"""
+        return self.send("search %s %s" % (type, query)).addCallback(self._songListParse)
 
 if __name__ == '__main__':
     f = Mpd(requireFloatTimes=False)

@@ -66,3 +66,6 @@ div.state-stop {
 .radio {
   background: #cfc;
 }
+#cols .x-panel-mc {
+    background: white;
+}
