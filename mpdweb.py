@@ -143,6 +143,7 @@ for filename in ['ctl.html',
                  'playlist.html',
                  'volume.html',
                  'current.html',
+                 'tiny.html',
                  'ctl.css',
                  ]:
     f = static.File(os.path.join('ui', filename))
