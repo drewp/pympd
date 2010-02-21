@@ -244,8 +244,6 @@
 		makeColumnList('album', 250),
 	    ]
 	});
-
-
     }
 
       $(go);
@@ -260,41 +258,35 @@
 	<td style="background: white"><div id="volume"></div></td>
 	<td>
 	  <div class="buttonBar">
-	    <input type="submit" value="playone" 
-		   onclick="playOne('05_Ultramarine.mp3'); return false"/>
 	    <input type="submit" value="play / pause" 
 		   onclick="player.callMpd('pause', {}, true); return false"/>
 	    <input type="submit" value="stop" 
 		   onclick="player.callMpd('stop', {}, true); return false"/>
 	    <input type="submit" value="seek :10" 
 		   onclick="player.callMpd('seek', {seconds:10}, true); return false"/>
-	    <div id="radio">
-	    </div>
+	    <div id="radio"></div>
 	  </div>
 	</td>
       </tr>
     </table>
 
-<h2>Find by type</h2>
-<div id="cols"></div>
-<div id="songs"></div>
-
+    <h2>Find by type</h2>
+    <div id="cols"></div>
+    <div id="songs"></div>
+    
     <h2>Playlist</h2>
     <div id="playlist">
     </div>
 
-
-
     <div class="buttonBar">
       <input type="submit" value="clear playlist" 
-	     onclick="player.callMpd('clear').addCallback(playlistChanged); return false"/>	
+	     onclick="player.callMpd('clear').addCallback(updatePlaylist); return false"/>	
     </div>
 
     <div id="tree-div" 
 	 style="width:500px;"></div>
     
     <div style="clear:right"/>
-
 
     <div class="buttonBar">
       <input type="submit" value="Freshen status" 
@@ -303,24 +295,14 @@
 	     onclick="updatePlaylist(); return false"/>
     </div>
 
-
-    Status:
+    <h2>Status</h2>
     <div id="status"></div>
 
-    Commands:
+    <h2>Commands</h2>
     <div id="lastCmd"></div>
 
     <div style="display: none">
       todo:
-        OK indicate playing song
-        OK add any songs
-	OK delete song(s)
-	OK track current song time and change
-	OK playlistinfo for current song names
-	OK volume
-        OK fix web logs
-        OK fix volume ctl url; just serve extjs at toplevel
-        OK use ext CDN
         widget
         get the http methods right
 	close cvs, update pypi, rename for other proj?
@@ -332,6 +314,6 @@
         keyboard shortcuts on all buttons
         bug where deleting songs from playlist can cause a song to start playing
     </div>
-<a href="">refresh</a>
+    <a href="">refresh page</a>
   </body>
 </html>
