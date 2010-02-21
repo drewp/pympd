@@ -26,7 +26,11 @@
       var volumeSlider;
 
     function updateStatus(status) {
-        $('#status').text(MochiKit.Base.serializeJSON(status));
+        if (status.time) {
+            $('#status').text("Time: "+status.time.replace(":", " sec of "));
+	} else {
+	    $('#status').text('');
+	}
 	$('#state').text(status.state).attr('class', 'state state-'+status.state);
 	// 'error' key should be displayed. to get one, add a bogus http:// path
 	updatePlayingRow(status.song);
@@ -83,7 +87,7 @@
     	
     	$.each(songs, function (i, song) {
     	    pl.append($("<div>").append(
-    		$("<button>").text("Del").click(function () { 
+    		$("<button>").text("X").click(function () { 
     		    player.delId(song.Id) }),		    
     		$("<a>").text(displayedName(song)
     			     ).attr('href', 
@@ -141,7 +145,7 @@
 	    });
 	    var list = new Ext.list.ListView({
 		width: width,
-		height: 300,
+		height: 200,
 		frame: true,
 		store: store,
 		cls: "column",
@@ -256,24 +260,31 @@
     </script>
   </head>
   <body>
-<div id="loginBar"></div>
+    <div id="loginBar"></div>
     <table style="border: 0">
       <tr>
 	<td><div id="state"></div></td>
-	<td style="background: white"><div id="volume"></div></td>
+	<td style="background: white"><div>Vol</div><div id="volume"></div></td>
 	<td>
+
+    <div id="status"></div>
 	  <div class="buttonBar">
 	    <input type="submit" value="play / pause" 
 		   onclick="player.callMpd('pause', {}, true); return false"/>
 	    <input type="submit" value="stop" 
 		   onclick="player.callMpd('stop', {}, true); return false"/>
-	    <input type="submit" value="seek :10" 
-		   onclick="player.callMpd('seek', {seconds:10}, true); return false"/>
-	    <div id="radio"></div>
+<!--	    <input type="submit" value="seek :10" 
+		   onclick="player.callMpd('seek', {seconds:10}, true); return false"/>-->
 	  </div>
 	</td>
       </tr>
     </table>
+    
+    <h2>Playlist</h2>
+    <div>
+      <button onclick="player.callMpd('clear').addCallback(updatePlaylist); return false"/>Clear all</button>
+    </div>
+    <div id="playlist"></div>
 
     <h2>Find by type</h2>
     <div id="cols"></div>
@@ -283,15 +294,11 @@
       <button id="addAllMatches">Add all matches</button>
     </div>
     <div id="songs"></div>
-    
-    <h2>Playlist</h2>
-    <div id="playlist">
-    </div>
 
-    <div class="buttonBar">
-      <input type="submit" value="clear playlist" 
-	     onclick="player.callMpd('clear').addCallback(updatePlaylist); return false"/>	
-    </div>
+
+    <h2>Radio</h2>
+    <div id="radio"></div>
+	    
 
     <div id="tree-div" 
 	 style="width:500px;"></div>
@@ -304,9 +311,6 @@
       <input type="submit" value="Freshen playlist" 
 	     onclick="updatePlaylist(); return false"/>
     </div>
-
-    <h2>Status</h2>
-    <div id="status"></div>
 
     <h2>Commands</h2>
     <div id="lastCmd"></div>

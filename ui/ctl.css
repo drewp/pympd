@@ -30,17 +30,28 @@ div.state-stop {
 }
 
 #playlist {
-  -moz-column-width: 30em;
   background:white none repeat scroll 0% 0%;
   border:1px solid gray;
   margin:0.5em;
   padding:0.2em;
+  overflow-y: scroll;
+  height: 225px;
+  font-size: 80%;
+}
+#playlist button {
+    font-size:6px;
+    height:15px;
+    margin:0 4px 0 0;
+    padding:0;
+    color: red;
 }
 .playing {
     background: #af6;
 }
 #playlist div {
-  font-size: 80%;
+  font-size: 10px;
+overflow:hidden;
+white-space:nowrap;
 }
 #playlist div a {
   text-decoration: none;
