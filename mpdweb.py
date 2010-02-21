@@ -42,7 +42,7 @@ class JsonResult(object):
             return json.serialize(ret)
 
         request = inevow.IRequest(ctx)
-        request.setHeader("Content-Type", "text/javascript")
+        request.setHeader("Content-Type", "application/json")
 
         if isinstance(self.result, defer.Deferred):
             self.result.addCallback(convert)
@@ -102,7 +102,6 @@ def argsFromPostOrGet(method, postData, ctx):
             postArgs = dict(urlparse.parse_qsl(postData))
         else:
             postArgs = json.parse(postData)
-    print "postArgs", repr(postArgs)
     acceptedArgs, _, _, _ = inspect.getargspec(method)
     callArgs = {}
     for name in acceptedArgs:

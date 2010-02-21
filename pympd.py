@@ -158,6 +158,11 @@ class Status(ResultDict):
     def __repr__(self):
         return repr(self.__dict__)
 
+def mpdEscape(s):
+    # got this from
+    # http://github.com/magcius/python-mpd/blob/master/mpd.py, haven't
+    # checked mpd's actual policy
+    return '"%s"' % s.replace("\\", "\\\\").replace('"', '\\"')
 
 class Mpd(QueueingCommandClientFactory):
     """http://www.musicpd.org/doc/protocol/
@@ -193,8 +198,7 @@ class Mpd(QueueingCommandClientFactory):
         return self.send("setvol %d" % vol)
 
     def add(self,path):
-        # path with spaces is making an error here
-        return self.send("add %s" % path)
+        return self.send("add %s" % mpdEscape(path))
 
     def deleteid(self, songid):
         return self.send("deleteid %s" % songid)
@@ -284,7 +288,7 @@ class Mpd(QueueingCommandClientFactory):
                     # see http://mpd.wikia.com/wiki/MusicPlayerDaemonCommands#How_to_get_the_available_playlists
                     pass
             return ret
-        return self.send("lsinfo %s" % directory).addCallback(parse)
+        return self.send("lsinfo %s" % mpdEscape(directory)).addCallback(parse)
 
     def list(self, type, whereType=None, whereValue=None):
         """list of tuples of matches of the given type, with an optional constraint.
@@ -295,12 +299,15 @@ class Mpd(QueueingCommandClientFactory):
                 ret.append(tuple(w.decode('utf8') for w in line.split(': ', 1)))
             return ret
         return self.send("list %s %s %s" % (
-            type, whereType or '', whereValue or '')
+            (type),
+            (whereType or ''),
+            mpdEscape(whereValue) if whereValue else '')
                          ).addCallback(parse)
 
     def search(self, type, query):
         """file results are split into (dir,file)"""
-        return self.send("search %s %s" % (type, query)).addCallback(self._songListParse)
+        return self.send("search %s %s" % (mpdEscape(type), mpdEscape(query))
+                         ).addCallback(self._songListParse)
 
 if __name__ == '__main__':
     f = Mpd(requireFloatTimes=False)
