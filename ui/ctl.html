@@ -117,7 +117,7 @@
 
     function go() {
 
-	//logMpdCommands('lastCmd');
+	logMpdCommands('lastCmd');
 	volumeSlider = createVolumeSlider($('#volume')[0], player);
 	observeStatus(updateStatus);
 	observePlaylist(updatePlaylist);
@@ -126,7 +126,6 @@
 	updatePlaylist();
 //	setupLibraryTree(player, 'tree-div');
 	addRadio();
-	//player.on('currentSong', onCurrentSongName);
 	player.startPolling();
 
 	function makeColumnList(header, width) {

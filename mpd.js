@@ -6,13 +6,17 @@ _mpdLog = {};
 /**
 Add <li> children to this node for each command we send to mpd
 */
-function logMpdCommands(node) {
+function logMpdCommands(nodeId) {
+    var out = $("#"+nodeId);
     var append = function (command, args, result) {
-	appendChildNodes(node,
-			 LI(null, "Command: " + 
-			    MochiKit.Base.serializeJSON(command) + " " +
-			    MochiKit.Base.serializeJSON(args) + "-> " + 
-			    MochiKit.Base.serializeJSON(result)));
+	var t = ("Command: " + 
+		 MochiKit.Base.serializeJSON(command) + " " +
+		 MochiKit.Base.serializeJSON(args) + "-> " + 
+		 MochiKit.Base.serializeJSON(result));
+	out.append($("<li>").text(t));
+	if (out.children().length > 7) { 
+	    out.children(":first").remove();
+	}
     };
 
     MochiKit.Signal.connect(_mpdLog, 'lastCmd', append);
