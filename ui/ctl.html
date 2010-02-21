@@ -129,7 +129,6 @@
 	//player.on('currentSong', onCurrentSongName);
 	player.startPolling();
 
-
 	function makeColumnList(header, width) {
 	    var store = new Ext.data.ArrayStore({
 		url: 'mpd/list',
@@ -233,6 +232,13 @@
 	    });
 	});
 
+	$("#addAllMatches").click(function () {
+	    songPanel.getStore().each(function (rec) {
+	        player.callMpd("add", {path: rec.get('file')});
+	    });
+	    player.playlistChanged();
+	});
+
 	new Ext.Panel({
 	    renderTo: 'cols',
 	    layout: 'column',
@@ -272,6 +278,11 @@
 
     <h2>Find by type</h2>
     <div id="cols"></div>
+
+    <h2>Matching tracks</h2>
+    <div>
+      <button id="addAllMatches">Add all matches</button>
+    </div>
     <div id="songs"></div>
     
     <h2>Playlist</h2>

@@ -136,7 +136,7 @@ mpd.Mpd.prototype = {
 	this.callMpd("clear").addCallback(MochiKit.Base.method(this, function (result) {
 	    this.callMpd("add", {path: filename}).addCallback(
 		MochiKit.Base.method(this, function (result) {
-		    MochiKit.Signal.signal(_mpdLog, 'playlistChanged');
+		    this.playlistChanged();
 		    this.callMpd("play", {songnum:0}, true);
 		}));
 	}));
@@ -150,10 +150,16 @@ mpd.Mpd.prototype = {
 	    var lastPos = status['playlistlength'] - 1;
 	    this.callMpd("add", {path: filename}, false).addCallback(
 		MochiKit.Base.method(this, function (result) {
-		    MochiKit.Signal.signal(_mpdLog, 'playlistChanged');
+		    this.playlistChanged();
 		    this.callMpd("play", {songnum:lastPos+1}, true);
 		}));
 	}));
+    },
+    
+    /* Until things are more automatic, you have to call this if you
+    might have changed the playlist contents */
+    playlistChanged: function () {
+	MochiKit.Signal.signal(_mpdLog, 'playlistChanged');
     },
 
     /**
