@@ -10,19 +10,19 @@ function logMpdCommands(node) {
     var append = function (command, args, result) {
 	appendChildNodes(node,
 			 LI(null, "Command: " + 
-			    serializeJSON(command) + " " +
-			    serializeJSON(args) + "-> " + 
-			    serializeJSON(result)));
+			    MochiKit.Base.serializeJSON(command) + " " +
+			    MochiKit.Base.serializeJSON(args) + "-> " + 
+			    MochiKit.Base.serializeJSON(result)));
     };
 
-    connect(_mpdLog, 'lastCmd', append);
+    MochiKit.Signal.connect(_mpdLog, 'lastCmd', append);
 }
 
 /**
  Call func with a status object whenever the mpd status might have changed.
 */
 function observeStatus(func) {
-    connect(_mpdLog, 'statusChanged', func);
+    MochiKit.Signal.connect(_mpdLog, 'statusChanged', func);
 }
 
 /**
@@ -31,7 +31,7 @@ changed. Func has to get the playlist itself if it wants to know the
 new contents.
 */
 function observePlaylist(func) {
-   connect(_mpdLog, 'playlistChanged', func);
+   MochiKit.Signal.connect(_mpdLog, 'playlistChanged', func);
 }
 
 var mpd = {}
@@ -55,16 +55,16 @@ mpd.Mpd.prototype = {
       if (!args) {
           args = {};
       }
-      var d = doXHR(this.site + "mpd/"+command, {
+      var d = MochiKit.Async.doXHR(this.site + "mpd/"+command, {
 	  method: "POST", 
-          sendContent: serializeJSON(args)
+          sendContent: MochiKit.Base.serializeJSON(args)
       });
-      d.addCallback(method(this, function (xhr) {
-          var result = evalJSONRequest(xhr);
-  	  signal(_mpdLog, 'lastCmd', command, args, result);
+      d.addCallback(MochiKit.Base.method(this, function (xhr) {
+          var result = MochiKit.Async.evalJSONRequest(xhr);
+  	  MochiKit.Signal.signal(_mpdLog, 'lastCmd', command, args, result);
 
   	  if (command == "status") {
-  	      signal(_mpdLog, 'statusChanged', result);
+  	      MochiKit.Signal.signal(_mpdLog, 'statusChanged', result);
 	      this._currentSong(result);
 	      this._playState(result);
   	  }
@@ -75,7 +75,7 @@ mpd.Mpd.prototype = {
 
           return result;
 	}));
-	d.addErrback(method(this, function (err) {
+	d.addErrback(MochiKit.Base.method(this, function (err) {
 	    console.log("XHR failed:", err);
 	    // TODO: fire statusChanged with the message on an
 	    // appropriate attribute of the status obj
@@ -101,8 +101,8 @@ mpd.Mpd.prototype = {
 	    this._isPlayingStream()) {
 	    this._lastCurrentSongId = status.songid;
 	    player.callMpd("currentsong", {}).addCallback(
-		method(this, function (info) {
-		    signal(_mpdLog, 'currentSong', 
+		MochiKit.Base.method(this, function (info) {
+		    MochiKit.Signal.signal(_mpdLog, 'currentSong', 
 			   info.Title || info.Name || info.file);
 		    this._currentFile = info.file;
 		}));
@@ -117,7 +117,7 @@ mpd.Mpd.prototype = {
     _playState: function (status) {
 	if (status.state != this._lastPlayState) {
 	    this._lastPlayState = status.state;
-	    signal(_mpdLog, 'playState', status.state);
+	    MochiKit.Signal.signal(_mpdLog, 'playState', status.state);
 	}
     },
 
@@ -133,10 +133,10 @@ mpd.Mpd.prototype = {
       Clear playlist, add the given filename, and start playing it.
     */
     playOne: function (filename) {
-	this.callMpd("clear").addCallback(method(this, function (result) {
+	this.callMpd("clear").addCallback(MochiKit.Base.method(this, function (result) {
 	    this.callMpd("add", {path: filename}).addCallback(
-		method(this, function (result) {
-		    signal(_mpdLog, 'playlistChanged');
+		MochiKit.Base.method(this, function (result) {
+		    MochiKit.Signal.signal(_mpdLog, 'playlistChanged');
 		    this.callMpd("play", {songnum:0}, true);
 		}));
 	}));
@@ -146,11 +146,11 @@ mpd.Mpd.prototype = {
       Add the given filename and start playing it. Filename can be a directory.
     */
     addPlay: function (filename) {
-	this.callMpd("status").addCallback(method(this, function(status) {
+	this.callMpd("status").addCallback(MochiKit.Base.method(this, function(status) {
 	    var lastPos = status['playlistlength'] - 1;
 	    this.callMpd("add", {path: filename}, false).addCallback(
-		method(this, function (result) {
-		    signal(_mpdLog, 'playlistChanged');
+		MochiKit.Base.method(this, function (result) {
+		    MochiKit.Signal.signal(_mpdLog, 'playlistChanged');
 		    this.callMpd("play", {songnum:lastPos+1}, true);
 		}));
 	}));
@@ -165,7 +165,7 @@ mpd.Mpd.prototype = {
 
     delId: function (id) {
 	this.callMpd("deleteid", {songid: id});
-	signal(_mpdLog, 'playlistChanged');
+	MochiKit.Signal.signal(_mpdLog, 'playlistChanged');
 	this.callMpd("status");
     },
 
@@ -182,7 +182,7 @@ mpd.Mpd.prototype = {
     // not taking, yet. I could just use the extjs Observable
     // superclass, but so far this module is independent of extjs.
     on: function(signal, handler) {
-	connect(_mpdLog, signal, handler);
+	MochiKit.Signal.connect(_mpdLog, signal, handler);
     }
     
 };

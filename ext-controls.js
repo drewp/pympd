@@ -15,7 +15,7 @@ function createVolumeSlider(parent, player, sliderOpts) {
     }
 
     var volumeSlider = new Ext.Slider(
-	merge({
+	MochiKit.Base.merge({
 	    renderTo: parent,
 	    increment: 3,
 	    minValue: 0,
@@ -44,7 +44,7 @@ function createSeekSlider(parent, player, sliderOpts) {
     }
 
     var seekSlider = new Ext.Slider(
-	merge({
+	MochiKit.Base.merge({
 	    renderTo: parent,
 	    increment: 1,
 	    minValue: 0,
