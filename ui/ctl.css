@@ -4,7 +4,7 @@
 body {
   background: #bce;
 }
-table, td {
+table.x, td.x {
     border-collapse: collapse;
     border: 1px solid gray;
 }

@@ -50,7 +50,6 @@
     */
     function updatePlayingRow(num) {
 	$("#playlist .playing").removeClass("playing");
-	console.log("light", num);
 	var playingRow = $('#playlist .row-'+num).addClass("playing");
 	$("#playlist").attr("playingRow", num);
     }
