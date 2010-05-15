@@ -39,7 +39,11 @@ class JsonResult(object):
             else:
                 ret = result
             log.debug("result %s", str(ret)[:1000])
-            return json.serialize(ret)
+            try:
+                return json.serialize(ret)
+            except TypeError:
+                # out of sync with mpd? let supervisor restart us
+                raise SystemExit
 
         request = inevow.IRequest(ctx)
         request.setHeader("Content-Type", "application/json")
