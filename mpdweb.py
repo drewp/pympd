@@ -68,6 +68,9 @@ class MpdCommand(object):
         methodName = segments[0]
         if methodName == 'lsinfoTree':
             return self.child_lsinfoTree(ctx), []
+        local = getattr(self, 'child_' + methodName, None)
+        if local is not None:
+            return local(ctx), []
         if methodName.startswith('_'):
             raise ValueError("command: %s" % methodName)
 
@@ -95,6 +98,51 @@ class MpdCommand(object):
         return d.addCallback(formatChildren)
 
         return "[{id:1,text:'hi',leaf:true}]"
+
+    @defer.inlineCallbacks
+    def child_getMusicState(self, ctx):
+        """returns a json object suitable for passing to
+        setMusicState. The consumer will now have the same playlist
+        and current song/position as the producer.
+
+        post this with a stop=0 arg if you also want to stop the
+        playback, which might be suitable if you're passing the
+        playback from one mpd instance to another. The value to stop
+        is the delay in seconds before stopping.
+        """
+        req = inevow.IRequest(ctx)
+            
+        status = yield self.mpd.status()
+        pl = yield self.mpd.playlistinfo()
+
+        if ctx.arg('stop') is not None:
+            if req.method != 'POST':
+                raise ValueError("must use POST to affect playback")
+            reactor.callLater(float(ctx.arg('stop')), self.mpd.stop)
+        
+        defer.returnValue(json.serialize({
+            u'status' : status.jsonState(),
+            u'playlist' : pl.jsonState()}))
+
+    @defer.inlineCallbacks
+    def child_setMusicState(self, ctx):
+        """
+        post a json object from a getMusicState call. The current
+        playlist will be cleared and replaced with the input
+        one. Playback will pick up where the input says to
+        """
+        data = json.parse(postDataFromCtx(ctx))
+        yield self.mpd.clear()
+        startNum = None
+        for num, row in enumerate(data['playlist']):
+            yield self.mpd.add(row['file'].encode('utf-8'))
+            if row['Id'] == data['status']['songid']:
+                startNum = num
+        if startNum is not None and data['status']['state'] == 'play':
+            yield self.mpd.seek(int(data['status']['time'].split(':')[0]),
+                                startNum)
+        defer.returnValue('ok')
+        
 
 def argsFromPostOrGet(method, postData, ctx):
     """return an args dict based on the json-encoded postdata (or form urlencoded),
