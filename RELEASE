@@ -1,0 +1,12 @@
+update setup.py version number
+
+update pympd.py version number
+
+darcs record -a -m "version 1.2"
+darcs push /my/darcs/pympd
+
+python setup.py sdist
+cp dist/pympd-1.2.tar.gz /my/site/projects/
+python setup.py register
+
+check http://pypi.python.org/pypi/pympd/
