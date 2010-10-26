@@ -2,99 +2,135 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>MPD control</title>
-    <script type="text/javascript" src="../jquery-1.4.2.min.js"></script>
-    <script type="text/javascript">
+    <script type="text/javascript" src="jquery-1.4.3.min.js"></script>
+      <script type="text/javascript">
       // <![CDATA[
 
-$(function () {
+      $(function () {
 
-//    volumeSlider = createVolumeSlider($('volume'), player);
-//    player.startPolling();
+	  //    volumeSlider = createVolumeSlider($('volume'), player);
+	  //    player.startPolling();
 
-    // theory doesn't expose this as json, only as a rendered
-    // selection list. Ideally we'd just getJSON and loop through some
-    // result rows
-    function getPlaylists(cb) {
-	// cb is called once for each playlist name
-	var readDiv = $('<div id="readPlaylists" style="display:none">');
-	$("body").append(readDiv);
-	readDiv.load("playlist #playlists", function () {
-	    readDiv.find("option").each(function (i, opt) {
-		var name = $(opt).attr('value');
-		if (name) { 
-		    cb(name);
-		}
-	    });
-	    readDiv.remove();
-	});
 
-    }
+	  $.getJSON("mpd/playlists", function (data) {
+	      $.each(data.playlists, function (i, pl) {
+		  var but = $("<button>").text(pl.name);
+		  but.click(function () {
+		      $.ajax({
+			  type: "put",
+			  url: "mpd/currentPlaylist",
+			  data: pl.name,
+			  success: function () {
+			      $.ajax({
+				  type: "post",
+				  url: "mpd/play"
+			      });
+			  }
+		      });
+		  });
+		  $("#playlistButtons").append(but);
+	      });
+	  });
 
-    getPlaylists(function (name) {
-	$("#playlistButtons").append($("<button>").text(name));
+	  
+	  $(".volumeStack button").click(function () { 
+	      var vol = $(this).text();
+	      $.ajax({type: "put", url: "mpd/volume", data: vol});
+	  });
 
-    });
-    
-    $(".volumeStack button").click(function () { 
-	var vol = $(this).text();
-	$.get("mpdcontrol/setvolume/"+vol);
-    });
+	  $("#pause").click(function () {
+	      $.post("mpd/pause");
+	  });
 
-});
+	  $("#host").text(document.location.pathname.split("/")[2]);
+
+      });
 
       // ]]>
-    </script>
-    <style type="text/css" media="all">
-      /* <![CDATA[ */
-body {
-    width: 320px;
+      </script>
+    <meta name="viewport" content="width=320; initial-scale=1.0; minimum-scale: 1.0; user-scalable=no"/>
 
+	<style type="text/css" media="all">
+	/* <![CDATA[ */
+	body {
+	    background: #121212;
+	    font-family: sans-serif;
+	    color: white;
+	}
+h2 {
+ margin: 0;
+padding: 0;
 }
-.volumeStack {
-    width: 170px;
-    border: 1px solid gray;
-    padding: 5px;
-    position: relative;
+	#column {
+	    background: #000000;
+	    width: 320px;
+	}
+	.volumeStack {
+	    width: 170px;
+	    border: 1px solid gray;
+	    padding: 5px;
+	    position: relative;
+	    margin-left:auto;
+	    margin-right:auto;
+	}
+	.volumeStack button {
+	    width: 70px;
+	    height: 30px;
+	}
+	.volumeStack > div {
+	    margin: 5px 0;
+	}
+
+	.volumeStack .local { position: absolute; margin: 0; left: 90px; }
+	.volumeStack .upper {   top: 90px; }
+	.volumeStack .current { top: 120px}
+	.volumeStack .lower {   top: 150px; }
+	.volumeStack .upper button { background: #caa; }
+	.volumeStack .lower button { background: #aca; }
+	.volumeStack .current button { }
+
+
+	#playlistButtons button {
+	    -moz-border-radius:10px;
+	    -webkit-border-radius:10px;
+	    border:2px outset gray;
+	    padding:15px;
+	    width: 105px;
+	}
+#pause {
+padding:10px 50px;
 }
-.volumeStack button {
-    width: 70px;
-    height: 30px;
-}
-.volumeStack > div {
-    margin: 5px 0;
-}
+	/* ]]> */
+	 </style>
 
-.volumeStack .local { position: absolute; margin: 0; left: 90px; }
-.volumeStack .upper {   top: 90px; }
-.volumeStack .current { top: 120px}
-.volumeStack .lower {   top: 150px; }
-.volumeStack .upper button { background: #caa; }
-.volumeStack .lower button { background: #aca; }
-.volumeStack .current button { }
-/* ]]> */
-    </style>
+	  </head>
+	  <body>
 
-  </head>
-  <body>
+<div id="column">
 
-    Playlist demo:
+<div style="float: left">Music on <span id="host"/></div>
+<div style="float: right"><button id="pause">Pause</button></div>
+<div style="clear: both"/>
 
+	    Playlists:
+	    <div id="playlistButtons"></div>
 
-    <div id="playlistButtons"></div>
+	    <div></div>
 
-    <div class="volumeStack">
-<h2>Volume</h2>
-      <div><button>100</button></div>
-      <div><button>80</button></div>
-      <div><button>60</button></div>
-      <div><button>40</button></div>
-      <div><button>20</button></div>
-      <div><button>0</button></div>
+	    <div class="volumeStack">
+	      <h2>Volume</h2>
+	      <div><button>100</button></div>
+	      <div><button>80</button></div>
+	      <div><button>60</button></div>
+	      <div><button>40</button></div>
+	      <div><button>20</button></div>
+	      <div><button>0</button></div>
 
-      <div class="local upper"><button>83</button></div>
-      <div class="local current">81</div>
-      <div class="local lower"><button>79</button></div>
-    </div>
+	      <div class="local upper"><button>83</button></div>
+	      <div class="local current">81</div>
+	      <div class="local lower"><button>79</button></div>
+	    </div>
+</div>
 
-  </body>
-</html>
+	  </body>
+	</html>
