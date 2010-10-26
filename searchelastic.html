@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>mpd elastic</title>
+    <style type="text/css" media="all">
+      /* <![CDATA[ */
+      #results li {
+background: #ddd;
+margin: 2px;
+}
+      /* ]]> */
+    </style>
+
+    <script type="text/javascript" src="jquery-1.4.2.min.js"></script>
+    <script type="text/javascript">
+      // <![CDATA[
+$(function () {
+    var inProgress = false;
+    var runAnother = false;
+    var lastQuery = "";
+
+    function ResultGroup(type) {
+	this.type = type;
+	this.seenRows = {};
+	this.clear = function () {
+	    this.seenRows = {};
+	    $("#result-"+this.type).empty();
+	}
+	this.addRow = function (row) {
+	    var li = $("<li>");
+	    label = this.makeLabel(row);
+	    if (!label) { 
+		return;
+	    }
+	    if (this.seenRows[label]) {
+		return;
+	    }
+	    this.seenRows[label] = true;
+	    li.append($("<button>").text("add"));
+	    li.append(label);
+	    $("#result-"+this.type).append(li);
+	}
+	this.makeLabel = function(row) {
+	    var label;
+	    var src = row._source;
+	    if (this.type == "song") { 
+		return src.title || src.key; 
+	    }
+	    if (this.type == "album") { 
+		var dir = src.file.replace(/\/[^\/]*$/, "");
+		return (src.artist ? (src.artist + " / ") : "") + 
+		    (src.album || dir);
+	    }
+	    if (this.type == "artist") { 
+		return src.artist; 
+	    }
+	    throw "bad type" + this.type;
+	}
+    }
+
+    var results = {
+	song: new ResultGroup('song'),
+	album: new ResultGroup('album'),
+	artist: new ResultGroup('artist')
+    };
+    function runSearch() {
+	if (inProgress) {
+	    runAnother = true;
+	    return;
+	}
+	inProgress = true;
+	var query = $("input[name=q]").val();
+	if (query == lastQuery) {
+//	    return;
+	}
+	lastQuery = query;
+	$.getJSON("search", {q: query}, function (result) {
+	    inProgress = false;
+	    for (k in results) { results[k].clear(); }
+	    $.each(result.hits.hits, function (i, row) {
+		results.song.addRow(row);
+		results.album.addRow(row);
+		results.artist.addRow(row);
+	    });
+	    if (runAnother) {
+		runAnother = false;
+		runSearch();
+	    }
+	});
+    }
+
+    $("input[name=q]").val("dimitri").keyup(runSearch);
+    runSearch();
+});
+      // ]]>
+    </script>
+  </head>
+  <body>
+    <form method="GET" action="search">
+      Music search: <input type="entry" name="q"/>
+    </form>
+    <div id="results">
+<div style="float:left">
+      <div>Songs:</div> <div class="group" id="result-song"/>
+</div>
+
+<div style="float:left">
+      <div>Albums:</div> <div class="group" id="result-album"/>
+</div>
+<div style="float:left">
+      <div>Artists:</div> <div class="group" id="result-artist"/>
+</div>
+<div style="clear:both"/>
+    </div>
+    <div style="border: 1px solid gray">
+      <h2>Current playlist:</h2>
+      <div id="playlist"/>
+    </div>
+  </body>
+</html>
