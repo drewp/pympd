@@ -257,6 +257,10 @@ class Mpd(QueueingCommandClientFactory):
             # only happened once and it wasn't repeatable
         return songs
 
+    def lsplaylists(self):
+        return self.send("lsplaylists").addCallback(
+            lambda ret: ret.splitlines())
+
     def playlistinfo(self, song=None):
         """returns list of song objects with file, Time, Pos, and Id
         attributes (with that capitalization). Optional arg song is a
