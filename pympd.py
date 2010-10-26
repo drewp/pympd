@@ -257,10 +257,6 @@ class Mpd(QueueingCommandClientFactory):
             # only happened once and it wasn't repeatable
         return songs
 
-    def lsplaylists(self):
-        return self.send("lsplaylists").addCallback(
-            lambda ret: ret.splitlines())
-
     def playlistinfo(self, song=None):
         """returns list of song objects with file, Time, Pos, and Id
         attributes (with that capitalization). Optional arg song is a
@@ -273,7 +269,7 @@ class Mpd(QueueingCommandClientFactory):
 
     def lsinfo(self, directory="/"):
         """list of tuples like ('directory', fullPath) or
-        ('file', filename, time)"""
+        ('file', filename, time) or ('playlist', None)"""
         def parse(result):
             class Entries(list):
                 def jsonState(self):
@@ -290,7 +286,7 @@ class Mpd(QueueingCommandClientFactory):
                     ret.append(('file', fileLine, int(line.split(': ', 1)[1])))
                 elif line.startswith('playlist: '):
                     # see http://mpd.wikia.com/wiki/MusicPlayerDaemonCommands#How_to_get_the_available_playlists
-                    pass
+                    ret.append(('playlist', line.split(': ', 1)[1], None))
             return ret
         return self.send("lsinfo %s" % mpdEscape(directory)).addCallback(parse)
 
@@ -312,6 +308,10 @@ class Mpd(QueueingCommandClientFactory):
         """file results are split into (dir,file)"""
         return self.send("search %s %s" % (mpdEscape(type), mpdEscape(query))
                          ).addCallback(self._songListParse)
+
+    def load(self, playlist):
+        return self.send("load %s" % mpdEscape(playlist)
+                         ).addCallback(lambda result: "ok")
 
 if __name__ == '__main__':
     f = Mpd(requireFloatTimes=False)

@@ -79,6 +79,36 @@ class MpdCommand(object):
         log.debug("Command: %s(%r)", mpdMethod.__name__, callArgs)
         return JsonResult(mpdMethod(**callArgs)), []
 
+    def child_playlists(self, ctx):
+        d = self.mpd.lsinfo("")
+        def findPlaylists(result):
+            request = inevow.IRequest(ctx)
+            request.setHeader("Content-Type", "application/json")
+            return json.serialize({u'playlists' : [
+                {u'name' : row[1].decode('utf8')}
+                for row in result if row[0] == 'playlist']})
+
+        return d.addCallback(findPlaylists)
+
+    def child_currentPlaylist(self, ctx):
+        req = inevow.IRequest(ctx)
+        if req.method in "PUT":
+            playlist = postDataFromCtx(ctx)
+            if not playlist:
+                raise ValueError("need name=playlist")
+            return self.mpd.clear().addCallback(
+                lambda result: self.mpd.load(playlist))
+        else:
+            raise NotImplementedError
+
+    def child_volume(self, ctx):
+        req = inevow.IRequest(ctx)
+        if req.method in "PUT":
+            return self.mpd.setvol(int(postDataFromCtx(ctx))).addCallback(
+                lambda result: "ok")
+        else:
+            raise NotImplementedError
+
     def child_lsinfoTree(self, ctx):
         """extjs tree makes POST requests with a 'node' arg, and
         expects child node definitions
@@ -198,7 +228,8 @@ for filename in ['ctl.html',
                  'tiny.html',
                  'ctl.css',
                  ]:
-    f = static.File(os.path.join('ui', filename))
+    f = static.File(os.path.join('ui', filename),
+                    defaultType='application/xhtml+xml')
 
     # i'll need this content-type if I do inline SVG graphics, but it
     # causes some things to break, like the extjs tree widget. Some
@@ -213,7 +244,7 @@ for filename in ['ctl.html',
     Mpdweb.pages.append(shortName)
 
 for filename in ['MochiKit-custom1.js',
-                 'jquery-1.4.2.min.js',
+                 'jquery-1.4.3.min.js',
                  'mpd.js',
                  'ext-controls.js',
                  'ext-2.2',
