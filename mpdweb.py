@@ -213,6 +213,7 @@ for filename in ['ctl.html',
     Mpdweb.pages.append(shortName)
 
 for filename in ['MochiKit-custom1.js',
+                 'jquery-1.4.2.min.js',
                  'mpd.js',
                  'ext-controls.js',
                  'ext-2.2',
