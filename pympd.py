@@ -127,10 +127,11 @@ def colonDictParse(lines,obj):
         try:
             val = int(val)
         except ValueError:
-            try:
-                val = float(val)
-            except ValueError:
-                pass
+            if val != "nan":
+                try:
+                    val = float(val)
+                except ValueError:
+                    pass
 
         if not key.startswith('_'):
             setattr(obj,key,val)
@@ -189,6 +190,12 @@ class Mpd(QueueingCommandClientFactory):
 
     def stop(self):
         return self.send("stop")
+
+    def next(self):
+        return self.send("next")
+
+    def previous(self):
+        return self.send("previous")
 
     def clear(self):
         return self.send("clear")

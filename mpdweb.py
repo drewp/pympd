@@ -9,7 +9,7 @@ status should be able to return a 304 Not Modified
 
 
 """
-import sys, optparse, inspect, logging, os, urlparse
+import sys, optparse, inspect, logging, os, urlparse, socket
 from twisted.internet import reactor, defer
 import twisted.python.log
 from zope.interface import implements
@@ -62,7 +62,11 @@ class MpdCommand(object):
         self.mpd = mpd
         
     def renderHTTP(self, ctx):
-        raise NotImplementedError
+        inevow.IRequest(ctx).setHeader("Content-Type", "application/json")
+        host, port = self.mpd.conn.transport.addr
+        return json.serialize({
+            u"host" : socket.gethostname().decode('ascii'),
+            u"mpd" : {u"host" : host.decode('ascii'), u"port" : port}})
         
     def locateChild(self, ctx, segments):
         methodName = segments[0]
@@ -94,6 +98,9 @@ class MpdCommand(object):
         req = inevow.IRequest(ctx)
         if req.method in "PUT":
             playlist = postDataFromCtx(ctx)
+            if playlist.startswith("{"):
+                # preferred mode sends json
+                playlist = json.parse(playlist)['name'].encode('utf8')
             if not playlist:
                 raise ValueError("need name=playlist")
             return self.mpd.clear().addCallback(
@@ -227,9 +234,11 @@ for filename in ['ctl.html',
                  'current.html',
                  'tiny.html',
                  'ctl.css',
+                 'static',
                  ]:
-    f = static.File(os.path.join('ui', filename),
-                    defaultType='application/xhtml+xml')
+    f = static.File(os.path.join('ui', filename))
+    f.contentTypes = {'.html':'application/xhtml+xml',
+                      '.css':'text/css'}
 
     # i'll need this content-type if I do inline SVG graphics, but it
     # causes some things to break, like the extjs tree widget. Some
@@ -263,8 +272,7 @@ if __name__ == '__main__':
 
     if opts.debug:
         log.setLevel(logging.DEBUG)
-
-    twisted.python.log.startLogging(sys.stdout)
+        twisted.python.log.startLogging(sys.stdout)
 
     reactor.listenTCP(opts.port, appserver.NevowSite(Mpdweb()))
     reactor.run()
