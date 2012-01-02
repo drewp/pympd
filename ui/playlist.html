@@ -134,19 +134,29 @@
     <script type="text/javascript" src="static/jquery-1.6.4.min.js"></script>
     <script type="text/javascript" src="static/underscore-1.2.0.min.js"></script> 
     <script type="text/javascript" src="static/backbone-0.5.3.min.js"></script> 
+    <script type="text/javascript" src="static/jquery.form.js"></script> 
     <script type="text/javascript">
-      // <![CDATA[
+    // <![CDATA[
+    $(function () {
+	
+
+	function albumFromSongFile(f) {
+	    return f.replace(/\/[^/]+$/, "");
+    }
+      function strip(s) {
+	  return s.replace(/^\s+/,"").replace(/\s+$/, "");
+      }
       
-      $(function () {
-	  function mpdAjax(method, url, dataObj, success) {
-	      return $.ajax({
-		  type: method,
-		  url: url,
-		  data: JSON.stringify(dataObj),
-		  headers: {"content-type" : "application/json"},
-		  success: success
-	      });
-	  }
+      
+      function mpdAjax(method, url, dataObj, success) {
+	  return $.ajax({
+	      type: method,
+	      url: url,
+	      data: JSON.stringify(dataObj),
+	      headers: {"content-type" : "application/json"},
+	      success: success
+	  });
+      }
 
 	  var mpfResource = {root: "mpdpandorafeeder/",
 			     stations: "mpdpandorafeeder/stations/",
@@ -492,9 +502,83 @@
 		      " talking to mpd at "+data.mpd.host+":"+data.mpd.port);
 	  });
 
-      });
-      // ]]>
-      </script>
+      function Search(inputElem, resultElem) {
+
+	  updateSearch();
+	  inputElem.bind("keyup", updateSearch);
+
+     	  function albumRow(row) {
+	      var albumPath = albumFromSongFile(row.file)
+  	      var form = $("<form>").ajaxForm(closeSearch).attr(
+		  {method: "POST", 
+		   action: "addAndPlay/"+escape(albumPath)})
+		  .append($("<button>").text("Play"))
+		  .append($("<span>").text(
+		      "Album "+row.Album+ " " + row.Artist));
+	      
+   	      return $("<li>").append(form);
+	  }
+
+	  function songRow(row) {
+	      return $("<li>").append(
+		  $("<form>").ajaxForm(closeSearch).attr(
+		      {method: "POST",
+		       action: "addAndPlay/"+escape(row.file)})
+		      .append($("<button>").text("Play"))
+		      .append($("<span>").text(
+			  row.Track + " " + row.Title)));
+	  }
+
+  	  function updateSearch() {
+	      resultElem.show();
+
+	      var ol = resultElem.find("ol");
+
+	      var q = strip(inputElem.val());
+	      if (q.length < 3) {
+		  ol.text("Enter search");
+		  return;
+	      }
+
+	      ol.empty().text("Searching...");
+	      var albumsShown = 0;
+	      $.getJSON(
+		  "mpd/search", {type: "album", query: q}, 
+		  function (data) {
+		      ol.empty();
+
+		      var lastAlbum = null;
+		      var currentSection = null;
+		      $.each(data, function (i, row) {
+			  if (albumsShown > 5) {
+			      return;
+			  }
+			  if (lastAlbum === null || row.Album != lastAlbum) {
+			      ol.append(albumRow(row));
+			      albumsShown += 1;
+			      currentSection = $("<ul>");
+			      ol.append(currentSection);
+			      lastAlbum = row.Album;
+			  }
+			  currentSection.append(songRow(row));
+		      });
+		      if (albumsShown == 0) {
+			  ol.text("No matches");
+		      }
+		  });
+	  }
+
+	  function closeSearch() {
+	      inputElem.val("");
+	      resultElem.hide();
+	  }
+      }
+
+      new Search($("input[name=q]"), $(".search > .results"));
+	
+     });
+// ]]>
+  </script>
     
   </head>
   <body>
@@ -505,25 +589,11 @@
     </div>
 
     <div class="section search">
-      Search: <input type="text" name="q"/>
-      <div class="results">
+      Search: <input type="text" name="q" value="incep" autocomplete="off"/>
+      <div class="results" style="display: none">
         <h2>Results:</h2>
 
-        <ol>
-          <li>Sophie_Ellis_Bextor-Read_My_Lips
-          <ol>
-            <li>01.Take_Me_Home.ogg</li>
-            <li>02.Lover.ogg</li>
-            <li>03.Move_This_Mountain.ogg</li>
-            <li>04.Murder_On_The_Dancefloor.ogg</li>
-            <li>05.I_Believe.ogg</li>
-            <li>06.Leave_The_Others_Alone.ogg</li>
-            <li>07.By_Chance.ogg</li>
-            <li>08.The_Universe_Is_You.ogg</li>
-            <li>09.Is_It_Any_Wonder.ogg</li>
-            <li>10.Everthing_Falls_Into_Place.ogg</li>
-          </ol>
-          </li>
+        <ol>         
         </ol>
       </div>
     </div>
