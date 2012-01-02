@@ -9,7 +9,7 @@ status should be able to return a 304 Not Modified
 
 
 """
-import sys, optparse, inspect, logging, os, urlparse, socket
+import sys, optparse, inspect, logging, os, urlparse, socket, urllib
 from twisted.internet import reactor, defer
 import twisted.python.log
 from zope.interface import implements
@@ -229,6 +229,14 @@ class Mpdweb(rend.Page):
         # control auto-reconnect behavior?
         reactor.connectTCP('localhost', 6600, self.mpd)
 
+    def locateChild(self, ctx, segments):
+        if segments[0] == 'addAndPlay':
+            req = inevow.IRequest(ctx)
+            if req.method != "POST":
+                raise ValueError("method not allowed; POST required")
+            return self.addAndPlay('/'.join(segments[1:])), []
+        return rend.Page.locateChild(self, ctx, segments)
+
     def render_pages(self, ctx, data):
         for p in self.pages:
             yield T.li[T.a(href=p)[p]]
@@ -236,6 +244,24 @@ class Mpdweb(rend.Page):
     def child_mpd(self, ctx):
         """e.g. /mpd/pause"""
         return MpdCommand(self.mpd)        
+
+    @defer.inlineCallbacks
+    def addAndPlay(self, mpdPath):
+        """ /addAndPlay/path/to/mpd/song.mp3
+            /addAndPlay/path/to/album/dir (no trailing slash)
+
+        todo: if the song(s) was earlier in the playlist, what's the
+        best thing to do? probably not to add them AGAIN
+        """
+        mpdPath = urllib.unquote(mpdPath)
+        status = yield self.mpd.status()
+        try:
+            yield self.mpd.add(mpdPath)
+        except pympd.MpdError, e:
+            raise ValueError("Adding %r, %s" % (mpdPath, e))
+        yield self.mpd.play(status.playlistlength)
+        defer.returnValue("added and played %s" % mpdPath)
+        
 
 for filename in ['ctl.html',
                  'gadget.html',
