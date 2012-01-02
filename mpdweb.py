@@ -41,9 +41,9 @@ class JsonResult(object):
             log.debug("result %s", str(ret)[:1000])
             try:
                 return json.serialize(ret)
-            except TypeError:
+            except TypeError, e:
                 # out of sync with mpd? let supervisor restart us
-                raise SystemExit
+                raise SystemExit("result %r, error %r" % (result, e))
 
         request = inevow.IRequest(ctx)
         request.setHeader("Content-Type", "application/json")
@@ -83,6 +83,16 @@ class MpdCommand(object):
         log.debug("Command: %s(%r)", mpdMethod.__name__, callArgs)
         return JsonResult(mpdMethod(**callArgs)), []
 
+    def child_sticker(self, ctx):
+        req = inevow.IRequest(ctx)
+        if req.method == 'GET':
+            x = self.mpd.sticker('list', ctx.arg('type'), ctx.arg('uri'))
+            def done(x):
+                import pdb;pdb.set_trace()                
+            x.addCallback(done)
+            return x
+        
+
     def child_playlists(self, ctx):
         d = self.mpd.lsinfo("")
         def findPlaylists(result):
@@ -101,6 +111,7 @@ class MpdCommand(object):
             if playlist.startswith("{"):
                 # preferred mode sends json
                 playlist = json.parse(playlist)['name'].encode('utf8')
+
             if not playlist:
                 raise ValueError("need name=playlist")
             return self.mpd.clear().addCallback(

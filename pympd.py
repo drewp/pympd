@@ -320,6 +320,12 @@ class Mpd(QueueingCommandClientFactory):
         return self.send("load %s" % mpdEscape(playlist)
                          ).addCallback(lambda result: "ok")
 
+    def sticker(self, op, *args):
+        def parse(result):
+            print "sticker result", repr(result)
+            return "hey"
+        return self.send("sticker %s %s" % (mpdEscape(op), ' '.join(mpdEscape(arg) for arg in args))).addCallback(parse)
+
 if __name__ == '__main__':
     f = Mpd(requireFloatTimes=False)
     def printer(x): print x
