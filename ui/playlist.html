@@ -113,6 +113,21 @@
 	    width: 45%;
 	}
 
+        .section.search {
+            position: relative;
+        }
+        .results {
+            background: none repeat scroll 0 0 #333333;
+            border: 2px solid white;
+            box-shadow: 0 10px 20px #000000;
+            display: inline-block;
+            left: 4em;
+            padding: 5px;
+            position: absolute;
+            top: 100%;
+            z-index: 5;
+        }
+
 	/* ]]> */
 	 </style>
 
@@ -487,6 +502,30 @@
     <div class="section configs">
       <div id="mpdWebConfig"></div>
       <div id="mpdPandoraFeederConfig"></div>
+    </div>
+
+    <div class="section search">
+      Search: <input type="text" name="q"/>
+      <div class="results">
+        <h2>Results:</h2>
+
+        <ol>
+          <li>Sophie_Ellis_Bextor-Read_My_Lips
+          <ol>
+            <li>01.Take_Me_Home.ogg</li>
+            <li>02.Lover.ogg</li>
+            <li>03.Move_This_Mountain.ogg</li>
+            <li>04.Murder_On_The_Dancefloor.ogg</li>
+            <li>05.I_Believe.ogg</li>
+            <li>06.Leave_The_Others_Alone.ogg</li>
+            <li>07.By_Chance.ogg</li>
+            <li>08.The_Universe_Is_You.ogg</li>
+            <li>09.Is_It_Any_Wonder.ogg</li>
+            <li>10.Everthing_Falls_Into_Place.ogg</li>
+          </ol>
+          </li>
+        </ol>
+      </div>
     </div>
 
     <div id="transport" class="section transport">
