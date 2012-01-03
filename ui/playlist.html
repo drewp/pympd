@@ -60,7 +60,6 @@
 	.currentPandoraSong {
 	    color: #F25AD8;
 	    border: 1px solid #F25AD8;
-	    height: 1.2em;
 	}
 
 	.playing {
@@ -127,6 +126,9 @@
             top: 100%;
             z-index: 5;
         }
+	.results button {
+	    border: 0 2px;
+	}
 
 	/* ]]> */
 	 </style>
@@ -348,11 +350,17 @@
 	    }));
 	}
 
+
+	var pandoraSongs = {}; // audioUrl : Song
+
 	{
 	    window.Song = Backbone.Model.extend({
 		isPandora: function () {
 		    return this.get("file").match(
 			    /http:\/\/.*?\.pandora\.com\//)
+		},
+		initialize: function (attr) {
+		    pandoraSongs[attr.file] = this;
 		}
 	    });
 
@@ -389,6 +397,8 @@
 		initialize: function () { 
 		    this.model.bind("change:isPlaying", this.setPlaying, 
 				    this);
+		    this.model.bind("change:pandoraData", 
+				    this.updatePandoraData, this);
 		},
 		setPlaying: function (_, ip) {
 		    if (ip) {
@@ -397,10 +407,15 @@
 			$(this.el).removeClass("playing");
 		    }
 		},
+		updatePandoraData: function (_, p) {
+		    $(this.el).children("div").text(
+			p.title + " / " + p.artist + " / " + p.album);
+		},
 		render: function () { 
 		    var div = $("<div>");
 		    if (this.model.isPandora()) {
 			div.addClass("currentPandoraSong");
+			div.text("(a song from Pandora)");
 			updatePandoraCurrentSong();
 		    } else {
 			var displayName = (this.model.get("Title") || 
@@ -432,13 +447,6 @@
 			el.empty();
 			this.model.each(function(song) {
 			    var view = new SongView({model: song});
-
-			    if (song.isPandora() && $(".currentPandoraSong").length) {
-				// this won't quite be right if there are
-				// pandora songs at various points in your
-				// playlist. you won't see the later ones
-				return;
-			    }
 			    el.append(view.render().el);
 			});
 		    }, this);
@@ -478,14 +486,18 @@
 	//updateStatus();
 
 	function updatePandoraCurrentSong() {
-	    // todo: only relevant if the pandora song is being played now
+	    // todo: only relevant if the pandora song is being played now.
+
+	    // This is getting over-called. It would be cool if the
+	    // request url was like /mpf/{the-pandora-url-here}, and
+	    // then the browser cache could remind us if we'd already
+	    // asked about that pandora urlq
 	    $.getJSON(mpfResource.currentSong, function (data) {
 		var p = data.song.pandora;
 		if (p) {
-		    $(".currentPandoraSong").text(
-			p.title + " / " + p.artist + " / " + p.album);
-		} else {
-		    $(".currentPandoraSong").text("(songs from Pandora)");
+		    if (pandoraSongs[p.audioUrl]) {
+			pandoraSongs[p.audioUrl].set({pandoraData: p});
+		    }
 		}
 	    });
 	}
@@ -503,27 +515,25 @@
 
 	function Search(inputElem, resultElem) {
 
-	    updateSearch();
 	    inputElem.bind("keyup", updateSearch);
 
+	    function addAndPlayForm(path) {
+		return $("<form>").ajaxForm(closeSearch).attr({
+		    method: "POST", 
+		    action: "addAndPlay/"+escape(path)
+		}).append($("<button>").text("Play")) ;
+	    }
+
      	    function albumRow(row) {
-		var albumPath = albumFromSongFile(row.file)
-  		var form = $("<form>").ajaxForm(closeSearch).attr(
-		    {method: "POST", 
-		     action: "addAndPlay/"+escape(albumPath)})
-		    .append($("<button>").text("Play"))
-		    .append($("<span>").text(
-			"Album "+row.Album+ " " + row.Artist));
-		
-   		return $("<li>").append(form);
+   		return $("<li>").append(
+		    addAndPlayForm(albumFromSongFile(row.file))
+			.append($("<span>").text(
+			    "Album: "+row.Album+ " " + row.Artist)));
 	    }
 
 	    function songRow(row) {
 		return $("<li>").append(
-		    $("<form>").ajaxForm(closeSearch).attr(
-			{method: "POST",
-			 action: "addAndPlay/"+escape(row.file)})
-			.append($("<button>").text("Play"))
+		    addAndPlayForm(row.file)
 			.append($("<span>").text(
 			    row.Track + " " + row.Title)));
 	    }
@@ -533,19 +543,31 @@
 
 		var ol = resultElem.find("ol");
 
-		var q = strip(inputElem.val());
+		function currentQuery() {
+		    return strip(inputElem.val());
+		}
+
+		var q = currentQuery();
+		if (q == "") {
+		    closeSearch();
+		    return;
+		}
 		if (q.length < 3) {
 		    ol.text("Enter search");
 		    return;
 		}
+		ol.empty();
+		resultElem.find(".status").text("Searching...");
 
-		ol.empty().text("Searching...");
 		var albumsShown = 0;
-		$.getJSON(
-		    "mpd/search", {type: "album", query: q}, 
-		    function (data) {
-			ol.empty();
 
+		$.getJSON(
+		    "multiSearch", {q: q}, 
+		    function (data) {
+			if (q != currentQuery()) {
+			    return; // too late
+			}
+			resultElem.find(".status").text("");
 			var lastAlbum = null;
 			var currentSection = null;
 			$.each(data, function (i, row) {
@@ -588,8 +610,9 @@
     </div>
 
     <div class="section search">
-      Search: <input type="text" name="q" value="incep" autocomplete="off"/>
+      Search: <input type="text" name="q" value="" autocomplete="off"/>
       <div class="results" style="display: none">
+	<div class="status"/>
         <h2>Results:</h2>
 
         <ol>         

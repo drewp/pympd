@@ -246,6 +246,12 @@ class Mpdweb(rend.Page):
         return MpdCommand(self.mpd)        
 
     @defer.inlineCallbacks
+    def child_multiSearch(self, ctx):
+        q = ctx.arg("q")
+        ret = yield self.mpd.search("any", q)
+        defer.returnValue(JsonResult(ret))
+
+    @defer.inlineCallbacks
     def addAndPlay(self, mpdPath):
         """ /addAndPlay/path/to/mpd/song.mp3
             /addAndPlay/path/to/album/dir (no trailing slash)
