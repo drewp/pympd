@@ -233,7 +233,11 @@ class Mpdweb(rend.Page):
         if segments[0] == 'addAndPlay':
             req = inevow.IRequest(ctx)
             if req.method != "POST":
-                raise ValueError("method not allowed; POST required")
+                if (req.method == 'GET' and
+                    'webOS' in req.getHeader('user-agent')): # odd
+                    pass
+                else:
+                    raise ValueError("method not allowed; POST required")
             return self.addAndPlay('/'.join(segments[1:])), []
         return rend.Page.locateChild(self, ctx, segments)
 
