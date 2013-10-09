@@ -257,11 +257,15 @@ class Mpdweb(rend.Page):
 
     @defer.inlineCallbacks
     def addAndPlay(self, mpdPath):
-        """ /addAndPlay/path/to/mpd/song.mp3
+        """
+        /addAndPlay/path/to/mpd/song.mp3
             /addAndPlay/path/to/album/dir (no trailing slash)
 
         todo: if the song(s) was earlier in the playlist, what's the
         best thing to do? probably not to add them AGAIN
+
+        todo: reasoning.py would prefer if the thing to play could be
+        a URI in the payload, for minimal escaping and url processing
         """
         mpdPath = urllib.unquote(mpdPath)
         status = yield self.mpd.status()
@@ -271,6 +275,10 @@ class Mpdweb(rend.Page):
             raise ValueError("Adding %r, %s" % (mpdPath, e))
         yield self.mpd.play(status.playlistlength)
         defer.returnValue("added and played %s" % mpdPath)
+
+    @defer.inlineCallbacks
+    def child_volumeAdjust(self, ctx):
+        req = inevow.IRequest(ctx)
         
 
 for filename in ['ctl.html',
